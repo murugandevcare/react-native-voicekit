@@ -1,16 +1,38 @@
-import { useState, useEffect } from 'react';
-import { StyleSheet, View, Text } from 'react-native';
-import { multiply } from 'react-native-listen';
+import { useEffect, useState } from 'react';
+import { StyleSheet, View, Text, Button } from 'react-native';
+import { Listen, ListenError, ListenEvent } from 'react-native-listen';
 
 export default function App() {
-  const [result, setResult] = useState<number | undefined>();
+  const [result, setResult] = useState<string | undefined>();
 
   useEffect(() => {
-    multiply(3, 7).then(setResult);
+    Listen.addListener(ListenEvent.PartialResult, (newResult) => {
+      console.log('Partial result', newResult);
+    });
+
+    Listen.addListener(ListenEvent.Result, (newResult) => {
+      console.log('Final result', newResult);
+      setResult(newResult);
+    });
   }, []);
 
   return (
     <View style={styles.container}>
+      <Button
+        title="Start Listening"
+        onPress={async () => {
+          console.log('Starting listening');
+          await Listen.startListening({ locale: 'de-DE' }).catch((error) => {
+            console.error(
+              'Error starting listening',
+              error,
+              error instanceof ListenError ? error.details : null
+            );
+          });
+          console.log('Started listening');
+        }}
+      />
+      <Button title="Stop Listening" onPress={() => Listen.stopListening()} />
       <Text>Result: {result}</Text>
     </View>
   );
