@@ -39,11 +39,12 @@
   "scripts": {
     "example": "yarn workspace react-native-voicekit-example",
     "test": "jest",
-    "typecheck": "tsc",
+    "typecheck": "tsc --noEmit",
     "lint": "eslint \"**/*.{js,ts,tsx}\"",
     "clean": "del-cli android/build example/android/build example/android/app/build example/ios/build lib",
-    "prepare": "bob build",
-    "release": "release-it"
+    "prepare": "yarn clean && bob build && rm -f lib/commonjs/package.json",
+    "release": "release-it",
+    "check": "yarn lint && yarn typecheck && scripts/swiftformat.sh"
   },
   "keywords": [
     "react-native",
@@ -133,14 +134,22 @@
     ],
     "rules": {
       "react/react-in-jsx-scope": "off",
+      "react-native/no-inline-styles": "off",
       "prettier/prettier": [
         "error",
         {
-          "quoteProps": "consistent",
-          "singleQuote": true,
+          "printWidth": 120,
           "tabWidth": 2,
+          "useTabs": false,
+          "semi": true,
+          "singleQuote": true,
+          "quoteProps": "consistent",
+          "jsxSingleQuote": false,
           "trailingComma": "es5",
-          "useTabs": false
+          "bracketSpacing": true,
+          "bracketSameLine": true,
+          "arrowParens": "always",
+          "endOfLine": "lf"
         }
       ]
     }
@@ -150,11 +159,18 @@
     "lib/"
   ],
   "prettier": {
-    "quoteProps": "consistent",
-    "singleQuote": true,
+    "printWidth": 120,
     "tabWidth": 2,
+    "useTabs": false,
+    "semi": true,
+    "singleQuote": true,
+    "quoteProps": "consistent",
+    "jsxSingleQuote": false,
     "trailingComma": "es5",
-    "useTabs": false
+    "bracketSpacing": true,
+    "bracketSameLine": true,
+    "arrowParens": "always",
+    "endOfLine": "lf"
   },
   "react-native-builder-bob": {
     "source": "src",

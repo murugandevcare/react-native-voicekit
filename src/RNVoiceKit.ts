@@ -22,20 +22,10 @@ const nativeInstance: NativeRNVoiceKit = NativeModules.VoiceKit
               // @ts-expect-error - we can't know the types of the functions and their arguments
               return await originalFunction(...args);
             } catch (error: any) {
-              if (
-                error?.code &&
-                Object.values(VoiceKitErrorCode).includes(error.code)
-              ) {
-                throw new RNVoiceKitError(
-                  error?.message || '',
-                  error.code as VoiceKitErrorCode
-                );
+              if (error?.code && Object.values(VoiceKitErrorCode).includes(error.code)) {
+                throw new RNVoiceKitError(error?.message || '', error.code as VoiceKitErrorCode);
               } else {
-                throw new RNVoiceKitError(
-                  'Unknown error',
-                  VoiceKitErrorCode.UNKNOWN,
-                  error
-                );
+                throw new RNVoiceKitError('Unknown error', VoiceKitErrorCode.UNKNOWN, error);
               }
             }
           };
@@ -52,17 +42,10 @@ const nativeInstance: NativeRNVoiceKit = NativeModules.VoiceKit
       }
     );
 
-const nativeEmitter = new NativeEventEmitter(
-  NativeModules.VoiceKitEventEmitter
-);
+const nativeEmitter = new NativeEventEmitter(NativeModules.VoiceKitEventEmitter);
 
 class RNVoiceKit {
-  private listeners: Partial<
-    Record<
-      VoiceKitEvent,
-      ((...args: VoiceKitEventMap[VoiceKitEvent]) => void)[]
-    >
-  > = {};
+  private listeners: Partial<Record<VoiceKitEvent, ((...args: VoiceKitEventMap[VoiceKitEvent]) => void)[]>> = {};
 
   constructor() {
     for (const event of Object.values(VoiceKitEvent)) {
@@ -82,24 +65,16 @@ class RNVoiceKit {
     await nativeInstance.stopListening();
   }
 
-  addListener<T extends VoiceKitEvent>(
-    event: T,
-    listener: (...args: VoiceKitEventMap[T]) => void
-  ) {
+  addListener<T extends VoiceKitEvent>(event: T, listener: (...args: VoiceKitEventMap[T]) => void) {
     if (!this.listeners[event]) {
       this.listeners[event] = [];
     }
     this.listeners[event].push(listener);
   }
 
-  removeListener<T extends VoiceKitEvent>(
-    event: T,
-    listener: (...args: VoiceKitEventMap[T]) => void
-  ) {
+  removeListener<T extends VoiceKitEvent>(event: T, listener: (...args: VoiceKitEventMap[T]) => void) {
     if (this.listeners[event]) {
-      this.listeners[event] = this.listeners[event].filter(
-        (l) => l !== listener
-      );
+      this.listeners[event] = this.listeners[event].filter((l) => l !== listener);
     }
   }
 }

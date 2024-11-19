@@ -23,11 +23,7 @@ export default function App() {
         onPress={async () => {
           console.log('Starting listening');
           await VoiceKit.startListening({ locale: 'de-DE' }).catch((error) => {
-            console.error(
-              'Error starting listening',
-              error,
-              error instanceof VoiceKitError ? error.details : null
-            );
+            console.error('Error starting listening', error, error instanceof VoiceKitError ? error.details : null);
           });
           console.log('Started listening');
         }}
