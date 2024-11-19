@@ -1,4 +1,4 @@
-package listen.example
+package voicekit.example
 
 import android.app.Application
 import com.facebook.react.PackageList

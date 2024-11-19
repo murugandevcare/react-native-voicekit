@@ -1,6 +1,6 @@
 #import <React/RCTBridgeModule.h>
 
-@interface RCT_EXTERN_MODULE(Listen, NSObject)
+@interface RCT_EXTERN_MODULE(VoiceKit, NSObject)
 
 RCT_EXTERN_METHOD(startListening:(NSDictionary *)options
                   withResolver:(RCTPromiseResolveBlock)resolve

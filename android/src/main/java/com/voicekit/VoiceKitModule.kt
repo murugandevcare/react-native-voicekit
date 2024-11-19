@@ -1,4 +1,4 @@
-package com.listen
+package com.voicekit
 
 import android.Manifest
 import android.content.Intent
@@ -15,7 +15,7 @@ import com.facebook.react.modules.core.DeviceEventManagerModule
 import com.facebook.react.bridge.Arguments
 import com.facebook.react.bridge.UiThreadUtil
 
-class ListenModule(reactContext: ReactApplicationContext) :
+class VoiceKitModule(reactContext: ReactApplicationContext) :
   ReactContextBaseJavaModule(reactContext) {
 
   private var speechRecognizer: SpeechRecognizer? = null
@@ -66,7 +66,7 @@ class ListenModule(reactContext: ReactApplicationContext) :
             override fun onReadyForSpeech(params: Bundle?) {}
 
             override fun onBeginningOfSpeech() {
-              Log.d("ListenModule", "onBeginningOfSpeech")
+              Log.d("VoiceKitModule", "onBeginningOfSpeech")
             }
 
             override fun onRmsChanged(rmsdB: Float) {}
@@ -74,11 +74,11 @@ class ListenModule(reactContext: ReactApplicationContext) :
             override fun onBufferReceived(buffer: ByteArray?) {}
 
             override fun onEndOfSpeech() {
-              Log.d("ListenModule", "onEndOfSpeech")
+              Log.d("VoiceKitModule", "onEndOfSpeech")
             }
 
             override fun onError(error: Int) {
-              Log.d("ListenModule", "onError: $error")
+              Log.d("VoiceKitModule", "onError: $error")
               val errorMessage = when (error) {
                 SpeechRecognizer.ERROR_AUDIO -> "Audio recording error"
                 SpeechRecognizer.ERROR_CLIENT -> "Client side error"
@@ -98,7 +98,7 @@ class ListenModule(reactContext: ReactApplicationContext) :
               val matches = results?.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION)
               if (matches != null && matches.isNotEmpty()) {
                 // Send final results
-                sendEvent("RNListen.result", matches[0])
+                sendEvent("RNVoiceKit.result", matches[0])
               }
             }
 
@@ -106,7 +106,7 @@ class ListenModule(reactContext: ReactApplicationContext) :
               val matches = partialResults?.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION)
               if (matches != null && matches.isNotEmpty()) {
                 // Send partial results
-                sendEvent("RNListen.partial-result", matches[0])
+                sendEvent("RNVoiceKit.partial-result", matches[0])
               }
             }
 
@@ -155,6 +155,6 @@ class ListenModule(reactContext: ReactApplicationContext) :
   }
 
   companion object {
-    const val NAME = "Listen"
+    const val NAME = "VoiceKit"
   }
 }

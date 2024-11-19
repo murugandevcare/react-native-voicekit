@@ -1,20 +1,20 @@
-import type NativeRNListen from './types/native';
+import type NativeRNVoiceKit from './types/native';
 import { NativeEventEmitter, NativeModules, Platform } from 'react-native';
-import RNListenError from './utils/ListenError';
-import { ListenErrorCode } from './types/native';
-import { ListenEvent } from './types';
-import type { ListenEventMap } from './types';
+import RNVoiceKitError from './utils/VoiceKitError';
+import { VoiceKitErrorCode } from './types/native';
+import { VoiceKitEvent } from './types';
+import type { VoiceKitEventMap } from './types';
 
 const LINKING_ERROR =
-  `The package 'react-native-listen' doesn't seem to be linked. Make sure: \n\n` +
+  `The package 'react-native-voicekit' doesn't seem to be linked. Make sure: \n\n` +
   Platform.select({ ios: "- You have run 'pod install'\n", default: '' }) +
   '- You rebuilt the app after installing the package\n' +
   '- You are not using Expo Go\n';
 
-// proxy NativeModules.Listen to catch any errors thrown by the native module and wrap them in a ListenError
-const nativeInstance: NativeRNListen = NativeModules.Listen
-  ? new Proxy(NativeModules.Listen, {
-      get(target: NativeRNListen, prop: keyof NativeRNListen) {
+// proxy NativeModules.VoiceKit to catch any errors thrown by the native module and wrap them in a VoiceKitError
+const nativeInstance: NativeRNVoiceKit = NativeModules.VoiceKit
+  ? new Proxy(NativeModules.VoiceKit, {
+      get(target: NativeRNVoiceKit, prop: keyof NativeRNVoiceKit) {
         const originalFunction = target[prop];
         if (typeof originalFunction === 'function') {
           return async (...args: any[]) => {
@@ -24,16 +24,16 @@ const nativeInstance: NativeRNListen = NativeModules.Listen
             } catch (error: any) {
               if (
                 error?.code &&
-                Object.values(ListenErrorCode).includes(error.code)
+                Object.values(VoiceKitErrorCode).includes(error.code)
               ) {
-                throw new RNListenError(
+                throw new RNVoiceKitError(
                   error?.message || '',
-                  error.code as ListenErrorCode
+                  error.code as VoiceKitErrorCode
                 );
               } else {
-                throw new RNListenError(
+                throw new RNVoiceKitError(
                   'Unknown error',
-                  ListenErrorCode.UNKNOWN,
+                  VoiceKitErrorCode.UNKNOWN,
                   error
                 );
               }
@@ -52,16 +52,21 @@ const nativeInstance: NativeRNListen = NativeModules.Listen
       }
     );
 
-const nativeEmitter = new NativeEventEmitter(NativeModules.ListenEventEmitter);
+const nativeEmitter = new NativeEventEmitter(
+  NativeModules.VoiceKitEventEmitter
+);
 
-class RNListen {
+class RNVoiceKit {
   private listeners: Partial<
-    Record<ListenEvent, ((...args: ListenEventMap[ListenEvent]) => void)[]>
+    Record<
+      VoiceKitEvent,
+      ((...args: VoiceKitEventMap[VoiceKitEvent]) => void)[]
+    >
   > = {};
 
   constructor() {
-    for (const event of Object.values(ListenEvent)) {
-      nativeEmitter.addListener(`RNListen.${event}`, (...args) => {
+    for (const event of Object.values(VoiceKitEvent)) {
+      nativeEmitter.addListener(`RNVoiceKit.${event}`, (...args) => {
         if (this.listeners[event]) {
           this.listeners[event]?.forEach((listener) => listener(...args));
         }
@@ -77,9 +82,9 @@ class RNListen {
     await nativeInstance.stopListening();
   }
 
-  addListener<T extends ListenEvent>(
+  addListener<T extends VoiceKitEvent>(
     event: T,
-    listener: (...args: ListenEventMap[T]) => void
+    listener: (...args: VoiceKitEventMap[T]) => void
   ) {
     if (!this.listeners[event]) {
       this.listeners[event] = [];
@@ -87,9 +92,9 @@ class RNListen {
     this.listeners[event].push(listener);
   }
 
-  removeListener<T extends ListenEvent>(
+  removeListener<T extends VoiceKitEvent>(
     event: T,
-    listener: (...args: ListenEventMap[T]) => void
+    listener: (...args: VoiceKitEventMap[T]) => void
   ) {
     if (this.listeners[event]) {
       this.listeners[event] = this.listeners[event].filter(
@@ -99,4 +104,4 @@ class RNListen {
   }
 }
 
-export default new RNListen();
+export default new RNVoiceKit();

@@ -1,7 +1,7 @@
 {
-  "name": "react-native-listen",
+  "name": "react-native-voicekit",
   "version": "0.1.0",
-  "description": "🎤Recognize and transcribe speech using React Native",
+  "description": "🎤 Recognize and transcribe speech using React Native",
   "source": "./src/index.tsx",
   "main": "./lib/commonjs/index.js",
   "module": "./lib/module/index.js",
@@ -37,7 +37,7 @@
     "!**/.*"
   ],
   "scripts": {
-    "example": "yarn workspace react-native-listen-example",
+    "example": "yarn workspace react-native-voicekit-example",
     "test": "jest",
     "typecheck": "tsc",
     "lint": "eslint \"**/*.{js,ts,tsx}\"",
@@ -52,14 +52,14 @@
   ],
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/kuatsu/react-native-listen.git"
+    "url": "git+https://github.com/kuatsu/react-native-voicekit.git"
   },
   "author": "Kuatsu App Agency <hello@kuatsu.de> (https://github.com/kuatsu)",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/kuatsu/react-native-listen/issues"
+    "url": "https://github.com/kuatsu/react-native-voicekit/issues"
   },
-  "homepage": "https://github.com/kuatsu/react-native-listen#readme",
+  "homepage": "https://github.com/kuatsu/react-native-voicekit#readme",
   "publishConfig": {
     "registry": "https://registry.npmjs.org/"
   },

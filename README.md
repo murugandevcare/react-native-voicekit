@@ -1,24 +1,22 @@
-# react-native-listen
+# react-native-voicekit
 
 🎤Recognize and transcribe speech using React Native
 
 ## Installation
 
 ```sh
-npm install react-native-listen
+npm install react-native-voicekit
 ```
 
 ## Usage
 
-
 ```js
-import { multiply } from 'react-native-listen';
+import { multiply } from 'react-native-voicekit';
 
 // ...
 
 const result = await multiply(3, 7);
 ```
-
 
 ## Contributing
 

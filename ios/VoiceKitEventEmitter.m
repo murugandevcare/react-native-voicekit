@@ -1,7 +1,7 @@
 #import <React/RCTBridgeModule.h>
 #import <React/RCTEventEmitter.h>
 
-@interface RCT_EXTERN_MODULE(ListenEventEmitter, RCTEventEmitter)
+@interface RCT_EXTERN_MODULE(VoiceKitEventEmitter, RCTEventEmitter)
 
 RCT_EXTERN_METHOD(supportedEvents)
 

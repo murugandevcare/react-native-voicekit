@@ -1,6 +1,6 @@
-import RNListen from './RNListen';
-import { ListenErrorCode } from './types/native';
-import ListenError from './utils/ListenError';
+import RNVoiceKit from './RNVoiceKit';
+import { VoiceKitErrorCode } from './types/native';
+import VoiceKitError from './utils/VoiceKitError';
 
 export * from './types/index';
-export { RNListen as Listen, ListenError, ListenErrorCode };
+export { RNVoiceKit as VoiceKit, VoiceKitError, VoiceKitErrorCode };

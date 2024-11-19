@@ -2,8 +2,8 @@ import AVFoundation
 import Foundation
 import Speech
 
-@objc(Listen)
-class Listen: NSObject, SFSpeechRecognizerDelegate {
+@objc(VoiceKit)
+class VoiceKit: NSObject, SFSpeechRecognizerDelegate {
   private var speechRecognizer = SFSpeechRecognizer(locale: Locale(identifier: "en-US"))
   private var recognitionRequest: SFSpeechAudioBufferRecognitionRequest?
   private var recognitionTask: SFSpeechRecognitionTask?
@@ -62,8 +62,8 @@ class Listen: NSObject, SFSpeechRecognizerDelegate {
     recognitionTask = speechRecognizer?.recognitionTask(with: recognitionRequest!) { result, error in
       if let result {
         // Emit partial results through event emitter
-        ListenEventEmitter.shared.sendEvent(
-          withName: "RNListen.partial-result",
+        VoiceKitEventEmitter.shared.sendEvent(
+          withName: "RNVoiceKit.partial-result",
           body: result.bestTranscription.formattedString
         )
       }
