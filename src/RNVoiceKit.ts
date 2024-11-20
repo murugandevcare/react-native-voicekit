@@ -1,9 +1,9 @@
 import type NativeRNVoiceKit from './types/native';
 import { NativeEventEmitter, NativeModules, Platform } from 'react-native';
-import RNVoiceKitError from './utils/VoiceKitError';
-import { VoiceKitErrorCode } from './types/native';
-import { VoiceKitEvent } from './types';
-import type { VoiceKitEventMap } from './types';
+import RNVoiceError from './utils/VoiceError';
+import { VoiceErrorCode } from './types/native';
+import { VoiceEvent } from './types';
+import type { VoiceEventMap } from './types';
 
 const LINKING_ERROR =
   `The package 'react-native-voicekit' doesn't seem to be linked. Make sure: \n\n` +
@@ -11,7 +11,7 @@ const LINKING_ERROR =
   '- You rebuilt the app after installing the package\n' +
   '- You are not using Expo Go\n';
 
-// proxy NativeModules.VoiceKit to catch any errors thrown by the native module and wrap them in a VoiceKitError
+// proxy NativeModules.VoiceKit to catch any errors thrown by the native module and wrap them in a VoiceError
 const nativeInstance: NativeRNVoiceKit = NativeModules.VoiceKit
   ? new Proxy(NativeModules.VoiceKit, {
       get(target: NativeRNVoiceKit, prop: keyof NativeRNVoiceKit) {
@@ -22,10 +22,10 @@ const nativeInstance: NativeRNVoiceKit = NativeModules.VoiceKit
               // @ts-expect-error - we can't know the types of the functions and their arguments
               return await originalFunction(...args);
             } catch (error: any) {
-              if (error?.code && Object.values(VoiceKitErrorCode).includes(error.code)) {
-                throw new RNVoiceKitError(error?.message || '', error.code as VoiceKitErrorCode);
+              if (error?.code && Object.values(VoiceErrorCode).includes(error.code)) {
+                throw new RNVoiceError(error?.message || '', error.code as VoiceErrorCode);
               } else {
-                throw new RNVoiceKitError('Unknown error', VoiceKitErrorCode.UNKNOWN, error);
+                throw new RNVoiceError('Unknown error', VoiceErrorCode.UNKNOWN, error);
               }
             }
           };
@@ -45,10 +45,10 @@ const nativeInstance: NativeRNVoiceKit = NativeModules.VoiceKit
 const nativeEmitter = new NativeEventEmitter(NativeModules.VoiceKitEventEmitter);
 
 class RNVoiceKit {
-  private listeners: Partial<Record<VoiceKitEvent, ((...args: VoiceKitEventMap[VoiceKitEvent]) => void)[]>> = {};
+  private listeners: Partial<Record<VoiceEvent, ((...args: VoiceEventMap[VoiceEvent]) => void)[]>> = {};
 
   constructor() {
-    for (const event of Object.values(VoiceKitEvent)) {
+    for (const event of Object.values(VoiceEvent)) {
       nativeEmitter.addListener(`RNVoiceKit.${event}`, (...args) => {
         if (this.listeners[event]) {
           this.listeners[event]?.forEach((listener) => listener(...args));
@@ -65,14 +65,18 @@ class RNVoiceKit {
     await nativeInstance.stopListening();
   }
 
-  addListener<T extends VoiceKitEvent>(event: T, listener: (...args: VoiceKitEventMap[T]) => void) {
+  async isAvailable(): Promise<boolean> {
+    return await nativeInstance.isSpeechRecognitionAvailable();
+  }
+
+  addListener<T extends VoiceEvent>(event: T, listener: (...args: VoiceEventMap[T]) => void) {
     if (!this.listeners[event]) {
       this.listeners[event] = [];
     }
-    this.listeners[event].push(listener);
+    this.listeners[event].push(listener as (...args: any[]) => void);
   }
 
-  removeListener<T extends VoiceKitEvent>(event: T, listener: (...args: VoiceKitEventMap[T]) => void) {
+  removeListener<T extends VoiceEvent>(event: T, listener: (...args: VoiceEventMap[T]) => void) {
     if (this.listeners[event]) {
       this.listeners[event] = this.listeners[event].filter((l) => l !== listener);
     }

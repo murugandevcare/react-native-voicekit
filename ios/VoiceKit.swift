@@ -8,10 +8,19 @@ class VoiceKit: NSObject, SFSpeechRecognizerDelegate {
   private var recognitionRequest: SFSpeechAudioBufferRecognitionRequest?
   private var recognitionTask: SFSpeechRecognitionTask?
   private let audioEngine = AVAudioEngine()
+  private var lastResultTimer: Timer?
+  private var lastTranscription: String?
 
   override init() {
     super.init()
     speechRecognizer?.delegate = self
+  }
+
+  func speechRecognizer(_: SFSpeechRecognizer, availabilityDidChange available: Bool) {
+    VoiceKitEventEmitter.shared.sendEvent(
+      withName: "RNVoiceKit.availability-change",
+      body: available
+    )
   }
 
   @objc(startListening:withResolver:withRejecter:)
@@ -24,22 +33,22 @@ class VoiceKit: NSObject, SFSpeechRecognizerDelegate {
           do {
             try self.startRecording(options: options, resolve: resolve, reject: reject)
           } catch {
-            reject("ERROR", "Failed to start recording: \(error.localizedDescription)", error)
+            reject(VoiceError.recordingStartFailed.code, VoiceError.recordingStartFailed.message, nil)
           }
         case .denied:
-          reject("ERROR", "Speech recognition permission denied", nil)
+          reject(VoiceError.permissionDenied.code, VoiceError.permissionDenied.message, nil)
         case .restricted:
-          reject("ERROR", "Speech recognition restricted on this device", nil)
+          reject(VoiceError.permissionRestricted.code, VoiceError.permissionRestricted.message, nil)
         case .notDetermined:
-          reject("ERROR", "Speech recognition not yet authorized", nil)
+          reject(VoiceError.permissionNotDetermined.code, VoiceError.permissionNotDetermined.message, nil)
         @unknown default:
-          reject("ERROR", "Unknown authorization status", nil)
+          reject(VoiceError.unknown(message: "Unknown authorization status").code, VoiceError.unknown(message: "Unknown authorization status").message, nil)
         }
       }
     }
   }
 
-  private func startRecording(options: [String: Any], resolve: @escaping RCTPromiseResolveBlock, reject: @escaping RCTPromiseRejectBlock) throws {
+  private func startRecording(options: [String: Any], resolve: @escaping RCTPromiseResolveBlock, reject _: @escaping RCTPromiseRejectBlock) throws {
     // Cancel any ongoing tasks
     recognitionTask?.cancel()
     recognitionTask = nil
@@ -61,18 +70,46 @@ class VoiceKit: NSObject, SFSpeechRecognizerDelegate {
     // Start recognition task
     recognitionTask = speechRecognizer?.recognitionTask(with: recognitionRequest!) { result, error in
       if let result {
+        // Store the latest transcription
+        self.lastTranscription = result.bestTranscription.formattedString
+
         // Emit partial results through event emitter
         VoiceKitEventEmitter.shared.sendEvent(
           withName: "RNVoiceKit.partial-result",
-          body: result.bestTranscription.formattedString
+          body: self.lastTranscription
         )
+
+        // Reset the timer
+        self.lastResultTimer?.invalidate()
+        self.lastResultTimer = Timer.scheduledTimer(withTimeInterval: 2.0, repeats: false) { _ in
+          if let finalTranscription = self.lastTranscription {
+            VoiceKitEventEmitter.shared.sendEvent(
+              withName: "RNVoiceKit.result",
+              body: finalTranscription
+            )
+          }
+        }
       }
+
       if error != nil {
+        self.lastResultTimer?.invalidate()
+        self.lastResultTimer = nil
+        self.lastTranscription = nil
         self.audioEngine.stop()
         self.audioEngine.inputNode.removeTap(onBus: 0)
         self.recognitionRequest = nil
         self.recognitionTask = nil
-        reject("ERROR", "Recognition failed: \(error!.localizedDescription)", error)
+        print("Error: \(error)")
+        if let error = error as NSError?, error.domain == "kAFAssistantErrorDomain" && error.code == 1110 {
+          // No speech detected - ignore
+          return
+        }
+
+        // Send error event
+        VoiceKitEventEmitter.shared.sendEvent(
+          withName: "RNVoiceKit.error",
+          body: VoiceError.unknown(message: error?.localizedDescription ?? "An unknown error occurred").message
+        )
       }
     }
 
@@ -97,5 +134,15 @@ class VoiceKit: NSObject, SFSpeechRecognizerDelegate {
     recognitionTask?.cancel()
     recognitionTask = nil
     resolve(true)
+  }
+
+  @objc(isSpeechRecognitionAvailable:withRejecter:)
+  func isSpeechRecognitionAvailable(resolve: @escaping RCTPromiseResolveBlock, reject: @escaping RCTPromiseRejectBlock) {
+    withPromise(resolve: resolve, reject: reject) {
+      guard let recognizer = speechRecognizer else {
+        return false
+      }
+      return recognizer.isAvailable
+    }
   }
 }

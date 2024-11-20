@@ -9,6 +9,9 @@ RCT_EXTERN_METHOD(startListening:(NSDictionary *)options
 RCT_EXTERN_METHOD(stopListening:(RCTPromiseResolveBlock)resolve
                   withRejecter:(RCTPromiseRejectBlock)reject)
 
+RCT_EXTERN_METHOD(isSpeechRecognitionAvailable:(RCTPromiseResolveBlock)resolve
+                  withRejecter:(RCTPromiseRejectBlock)reject)
+
 + (BOOL)requiresMainQueueSetup
 {
   return NO;

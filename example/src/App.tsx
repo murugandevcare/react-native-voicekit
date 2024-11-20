@@ -1,35 +1,25 @@
-import { useEffect, useState } from 'react';
 import { StyleSheet, View, Text, Button } from 'react-native';
-import { VoiceKit, VoiceKitError, VoiceKitEvent } from 'react-native-voicekit';
+import { VoiceError, useVoice } from 'react-native-voicekit';
 
 export default function App() {
-  const [result, setResult] = useState<string | undefined>();
-
-  useEffect(() => {
-    VoiceKit.addListener(VoiceKitEvent.PartialResult, (newResult) => {
-      console.log('Partial result', newResult);
-    });
-
-    VoiceKit.addListener(VoiceKitEvent.Result, (newResult) => {
-      console.log('Final result', newResult);
-      setResult(newResult);
-    });
-  }, []);
+  const { available, transcript, startListening, stopListening, resetTranscript } = useVoice({
+    enablePartialResults: false,
+  });
 
   return (
     <View style={styles.container}>
+      <Text>Is available: {available ? 'Yes' : 'No'}</Text>
       <Button
         title="Start Listening"
         onPress={async () => {
-          console.log('Starting listening');
-          await VoiceKit.startListening({ locale: 'de-DE' }).catch((error) => {
-            console.error('Error starting listening', error, error instanceof VoiceKitError ? error.details : null);
+          await startListening({ locale: 'de-DE' }).catch((error) => {
+            console.error('Error starting listening', error, error instanceof VoiceError ? error.details : null);
           });
-          console.log('Started listening');
         }}
       />
-      <Button title="Stop Listening" onPress={() => VoiceKit.stopListening()} />
-      <Text>Result: {result}</Text>
+      <Button title="Stop Listening" onPress={() => stopListening()} />
+      <Button title="Reset Transcript" onPress={() => resetTranscript()} />
+      <Text>Transcript: {transcript}</Text>
     </View>
   );
 }

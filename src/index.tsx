@@ -1,6 +1,7 @@
 import RNVoiceKit from './RNVoiceKit';
-import { VoiceKitErrorCode } from './types/native';
-import VoiceKitError from './utils/VoiceKitError';
+import { VoiceErrorCode } from './types/native';
+import VoiceError from './utils/VoiceError';
 
 export * from './types/index';
-export { RNVoiceKit as VoiceKit, VoiceKitError, VoiceKitErrorCode };
+export { useVoice } from './hooks/useVoice';
+export { RNVoiceKit as VoiceKit, VoiceError, VoiceErrorCode };

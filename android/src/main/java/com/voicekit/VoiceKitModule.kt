@@ -35,12 +35,14 @@ class VoiceKitModule(reactContext: ReactApplicationContext) :
   fun startListening(options: ReadableMap, promise: Promise) {
     val currentActivity = currentActivity
     if (currentActivity == null) {
-      promise.reject("ERROR", "Activity is null")
+      promise.reject(
+        VoiceError.Unknown("Activity is null").code,
+        VoiceError.Unknown("Activity is null").message
+      )
       return
     }
 
     // Check for permission
-    // TODO: Currently we don't wait for the pop-up permission dialog to be closed, but we should
     if (ContextCompat.checkSelfPermission(currentActivity, Manifest.permission.RECORD_AUDIO)
       != PackageManager.PERMISSION_GRANTED) {
       ActivityCompat.requestPermissions(
@@ -48,7 +50,10 @@ class VoiceKitModule(reactContext: ReactApplicationContext) :
         arrayOf(Manifest.permission.RECORD_AUDIO),
         PERMISSION_REQUEST_CODE
       )
-      promise.reject("ERROR", "Speech recognition permission denied")
+      promise.reject(
+        VoiceError.PermissionDenied.code,
+        VoiceError.PermissionDenied.message
+      )
       return
     }
 
@@ -79,19 +84,18 @@ class VoiceKitModule(reactContext: ReactApplicationContext) :
 
             override fun onError(error: Int) {
               Log.d("VoiceKitModule", "onError: $error")
-              val errorMessage = when (error) {
-                SpeechRecognizer.ERROR_AUDIO -> "Audio recording error"
-                SpeechRecognizer.ERROR_CLIENT -> "Client side error"
-                SpeechRecognizer.ERROR_INSUFFICIENT_PERMISSIONS -> "Insufficient permissions"
-                SpeechRecognizer.ERROR_NETWORK -> "Network error"
-                SpeechRecognizer.ERROR_NETWORK_TIMEOUT -> "Network timeout"
-                SpeechRecognizer.ERROR_NO_MATCH -> "No recognition result matched"
-                SpeechRecognizer.ERROR_RECOGNIZER_BUSY -> "Recognition service busy"
-                SpeechRecognizer.ERROR_SERVER -> "Server error"
-                SpeechRecognizer.ERROR_SPEECH_TIMEOUT -> "No speech input"
-                else -> "Unknown error"
+              val voiceError = when (error) {
+                SpeechRecognizer.ERROR_AUDIO -> VoiceError.RecordingStartFailed
+                SpeechRecognizer.ERROR_INSUFFICIENT_PERMISSIONS -> VoiceError.PermissionDenied
+                SpeechRecognizer.ERROR_NETWORK,
+                SpeechRecognizer.ERROR_NETWORK_TIMEOUT -> VoiceError.Unknown("Network error occurred")
+                SpeechRecognizer.ERROR_NO_MATCH -> VoiceError.RecognitionFailed
+                SpeechRecognizer.ERROR_RECOGNIZER_BUSY -> VoiceError.Unknown("Recognition service busy")
+                SpeechRecognizer.ERROR_SERVER -> VoiceError.Unknown("Server error occurred")
+                SpeechRecognizer.ERROR_SPEECH_TIMEOUT -> VoiceError.Unknown("No speech input")
+                else -> VoiceError.Unknown("Unknown error occurred")
               }
-              promise.reject("ERROR", errorMessage)
+              promise.reject(voiceError.code, voiceError.message)
             }
 
             override fun onResults(results: Bundle?) {
@@ -128,11 +132,11 @@ class VoiceKitModule(reactContext: ReactApplicationContext) :
           speechRecognizer?.startListening(intent)
           promise.resolve(true)
         } catch (e: Exception) {
-          promise.reject("ERROR", "Failed to start listening: ${e.message}")
+          promise.reject(VoiceError.RecognitionFailed.code, VoiceError.RecognitionFailed.message)
         }
       }
     } catch (e: Exception) {
-      promise.reject("ERROR", "Failed to start listening: ${e.message}")
+      promise.reject(VoiceError.RecognitionFailed.code, VoiceError.RecognitionFailed.message)
     }
   }
 
@@ -146,11 +150,21 @@ class VoiceKitModule(reactContext: ReactApplicationContext) :
           speechRecognizer = null
           promise.resolve(true)
         } catch (e: Exception) {
-          promise.reject("ERROR", "Failed to stop listening: ${e.message}")
+          promise.reject(VoiceError.RecognitionFailed.code, VoiceError.RecognitionFailed.message)
         }
       }
     } catch (e: Exception) {
-      promise.reject("ERROR", "Failed to stop listening: ${e.message}")
+      promise.reject(VoiceError.RecognitionFailed.code, VoiceError.RecognitionFailed.message)
+    }
+  }
+
+  @ReactMethod
+  fun isSpeechRecognitionAvailable(promise: Promise) {
+    try {
+      val available = SpeechRecognizer.isRecognitionAvailable(reactApplicationContext)
+      promise.resolve(available)
+    } catch (e: Exception) {
+      promise.resolve(false)
     }
   }
 
