@@ -17,7 +17,7 @@ on:
 jobs:
   build:
     name: Build iOS example app
-    runs-on: macOS-15
+    runs-on: macOS-latest
     steps:
       - uses: actions/checkout@v3
       - name: Setup
@@ -34,7 +34,7 @@ jobs:
           -scheme VoiceKitExample \
           -sdk iphonesimulator \
           -configuration Debug \
-          -destination 'platform=iOS Simulator,name=iPhone 16 Pro' \
+          -destination 'platform=iOS Simulator,name=iPhone 15 Pro' \
           build \
           CODE_SIGNING_ALLOWED=NO | xcpretty"
         working-directory: example/ios
