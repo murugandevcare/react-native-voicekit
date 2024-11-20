@@ -19,10 +19,15 @@ export function useVoice(props?: UseVoiceProps) {
   const { enablePartialResults = false, locale = 'en-US', mode = VoiceMode.Continuous } = props ?? {};
 
   const [available, setAvailable] = useState(false);
+  const [listening, setListening] = useState(false);
   const [transcript, setTranscript] = useState<string>('');
 
   const handleAvailabilityChanged = useCallback((newAvailable: boolean) => {
     setAvailable(newAvailable);
+  }, []);
+
+  const handleListeningStateChanged = useCallback((newListening: boolean) => {
+    setListening(newListening);
   }, []);
 
   const handlePartialResult = useCallback(
@@ -55,19 +60,22 @@ export function useVoice(props?: UseVoiceProps) {
 
     // Set up listeners
     RNVoiceKit.addListener(VoiceEvent.AvailabilityChange, handleAvailabilityChanged);
+    RNVoiceKit.addListener(VoiceEvent.ListeningStateChange, handleListeningStateChanged);
     RNVoiceKit.addListener(VoiceEvent.PartialResult, handlePartialResult);
     RNVoiceKit.addListener(VoiceEvent.Result, handleFinalResult);
 
     return () => {
       // Clean up listeners
       RNVoiceKit.removeListener(VoiceEvent.AvailabilityChange, handleAvailabilityChanged);
+      RNVoiceKit.removeListener(VoiceEvent.ListeningStateChange, handleListeningStateChanged);
       RNVoiceKit.removeListener(VoiceEvent.PartialResult, handlePartialResult);
       RNVoiceKit.removeListener(VoiceEvent.Result, handleFinalResult);
     };
-  }, [handleAvailabilityChanged, handlePartialResult, handleFinalResult]);
+  }, [handleAvailabilityChanged, handleListeningStateChanged, handlePartialResult, handleFinalResult]);
 
   return {
     available,
+    listening,
     transcript,
     startListening,
     stopListening,

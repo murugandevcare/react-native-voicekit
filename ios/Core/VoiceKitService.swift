@@ -9,6 +9,7 @@ protocol VoiceKitServiceDelegate: AnyObject {
   func onPartialResult(_ result: String)
   func onResult(_ result: String)
   func onError(_ error: VoiceError)
+  func onListeningStateChanged(_ isListening: Bool)
 }
 
 // MARK: - VoiceKitService
@@ -20,6 +21,11 @@ class VoiceKitService: NSObject, SFSpeechRecognizerDelegate {
   private let audioEngine = AVAudioEngine()
   private var lastResultTimer: Timer?
   private var lastTranscription: String?
+  private var isListening: Bool = false {
+    didSet {
+      delegate?.onListeningStateChanged(isListening)
+    }
+  }
   weak var delegate: VoiceKitServiceDelegate?
 
   override init() {
@@ -96,6 +102,8 @@ class VoiceKitService: NSObject, SFSpeechRecognizerDelegate {
 
     audioEngine.prepare()
     try audioEngine.start()
+
+    isListening = true
   }
 
   private func handleError(_ error: Error?) {
@@ -125,6 +133,7 @@ class VoiceKitService: NSObject, SFSpeechRecognizerDelegate {
     recognitionRequest = nil
     recognitionTask?.cancel()
     recognitionTask = nil
+    isListening = false
   }
 
   func isAvailable() -> Bool {

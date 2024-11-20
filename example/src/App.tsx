@@ -2,7 +2,7 @@ import { StyleSheet, View, Text, Button } from 'react-native';
 import { VoiceError, VoiceMode, useVoice } from 'react-native-voicekit';
 
 export default function App() {
-  const { available, transcript, startListening, stopListening, resetTranscript } = useVoice({
+  const { available, listening, transcript, startListening, stopListening, resetTranscript } = useVoice({
     locale: 'en-US',
     enablePartialResults: false,
     mode: VoiceMode.Continuous,
@@ -11,6 +11,7 @@ export default function App() {
   return (
     <View style={styles.container}>
       <Text>Is available: {available ? 'Yes' : 'No'}</Text>
+      <Text>Is listening: {listening ? 'Yes' : 'No'}</Text>
       <Button
         title="Start Listening"
         onPress={async () => {

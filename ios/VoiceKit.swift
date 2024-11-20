@@ -19,6 +19,13 @@ class VoiceKit: NSObject, VoiceKitServiceDelegate {
     )
   }
 
+  func onListeningStateChanged(_ isListening: Bool) {
+    VoiceKitEventEmitter.shared.sendEvent(
+      withName: "RNVoiceKit.listening-state-change",
+      body: isListening
+    )
+  }
+
   func onPartialResult(_ result: String) {
     VoiceKitEventEmitter.shared.sendEvent(
       withName: "RNVoiceKit.partial-result",

@@ -13,10 +13,17 @@ import androidx.core.content.ContextCompat
 import com.facebook.react.bridge.*
 import com.facebook.react.modules.core.DeviceEventManagerModule
 
-// TODO: Implement continuous mode
 class VoiceKitService(private val context: ReactApplicationContext) {
     private var speechRecognizer: SpeechRecognizer? = null
     private val PERMISSION_REQUEST_CODE = 1000
+
+    private var isListening: Boolean = false
+        set(value) {
+            if (field != value) {
+                field = value
+                sendEvent("RNVoiceKit.listening-state-change", value)
+            }
+        }
 
     fun sendEvent(eventName: String, params: Any?) {
         context
@@ -49,7 +56,7 @@ class VoiceKitService(private val context: ReactApplicationContext) {
         }
 
         // Set up recognition listener
-        speechRecognizer?.setRecognitionListener(createRecognitionListener())
+        speechRecognizer?.setRecognitionListener(createRecognitionListener(options))
 
         // Configure recognition intent
         val intent = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
@@ -63,6 +70,9 @@ class VoiceKitService(private val context: ReactApplicationContext) {
 
         // Start listening
         speechRecognizer?.startListening(intent)
+
+        isListening = true
+
         return true
     }
 
@@ -70,9 +80,10 @@ class VoiceKitService(private val context: ReactApplicationContext) {
         speechRecognizer?.stopListening()
         speechRecognizer?.destroy()
         speechRecognizer = null
+        isListening = false
     }
 
-    private fun createRecognitionListener(): RecognitionListener {
+    private fun createRecognitionListener(options: ReadableMap): RecognitionListener {
         return object : RecognitionListener {
             override fun onReadyForSpeech(params: Bundle?) {
                 Log.d(TAG, "SpeechRecognizer event fired: onReadyForSpeech")
@@ -88,6 +99,12 @@ class VoiceKitService(private val context: ReactApplicationContext) {
 
             override fun onEndOfSpeech() {
                 Log.d(TAG, "SpeechRecognizer event fired: onEndOfSpeech")
+                if (options.hasKey("mode") && options.getString("mode") == "continuous") {
+                    // TODO: We're in continuous mode, restart the recognizer
+                } else {
+                    // TODO: We're in single mode and the recognizer stopped, send listening state change
+                    isListening = false
+                }
             }
 
             override fun onError(error: Int) {
@@ -105,7 +122,11 @@ class VoiceKitService(private val context: ReactApplicationContext) {
                 }
 
                 if (error != SpeechRecognizer.ERROR_NO_MATCH) {
+                    // An error occurred that we can't recover from, send error and notify of listening state change
                     sendEvent("RNVoiceKit.error", voiceError)
+                    isListening = false
+                } else {
+                  // TODO: We need to restart the recognizer
                 }
             }
 
