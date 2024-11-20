@@ -19,6 +19,7 @@ class VoiceKitService(private val context: ReactApplicationContext) {
     private var speechRecognizer: SpeechRecognizer? = null
     private val PERMISSION_REQUEST_CODE = 1000
     private var audioManager: AudioManager? = null
+    private var previousMusicVolume: Int = 0
     private var previousNotificationVolume: Int = 0
 
     private var isListening: Boolean = false
@@ -39,13 +40,17 @@ class VoiceKitService(private val context: ReactApplicationContext) {
         if (audioManager == null) {
             audioManager = context.getSystemService(Context.AUDIO_SERVICE) as AudioManager
         }
-        previousNotificationVolume = audioManager?.getStreamVolume(AudioManager.STREAM_MUSIC) ?: 0
+        previousMusicVolume = audioManager?.getStreamVolume(AudioManager.STREAM_MUSIC) ?: 0
+        previousNotificationVolume = audioManager?.getStreamVolume(AudioManager.STREAM_NOTIFICATION) ?: 0
+
         audioManager?.setStreamVolume(AudioManager.STREAM_MUSIC, 0, AudioManager.FLAG_REMOVE_SOUND_AND_VIBRATE)
+        audioManager?.setStreamVolume(AudioManager.STREAM_NOTIFICATION, 0, AudioManager.FLAG_REMOVE_SOUND_AND_VIBRATE)
     }
 
     private fun unmuteRecognizerBeep() {
         Log.d(TAG, "Unmuting recognizer beep")
-        audioManager?.setStreamVolume(AudioManager.STREAM_MUSIC, previousNotificationVolume, AudioManager.FLAG_ALLOW_RINGER_MODES)
+        audioManager?.setStreamVolume(AudioManager.STREAM_MUSIC, previousMusicVolume, AudioManager.FLAG_ALLOW_RINGER_MODES)
+        audioManager?.setStreamVolume(AudioManager.STREAM_NOTIFICATION, previousNotificationVolume, AudioManager.FLAG_ALLOW_RINGER_MODES)
     }
 
     fun startListening(options: ReadableMap, skipMuteBeep: Boolean = false): Boolean {
