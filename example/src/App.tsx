@@ -3,6 +3,7 @@ import { VoiceError, useVoice } from 'react-native-voicekit';
 
 export default function App() {
   const { available, transcript, startListening, stopListening, resetTranscript } = useVoice({
+    locale: 'en-US',
     enablePartialResults: false,
   });
 
@@ -12,7 +13,7 @@ export default function App() {
       <Button
         title="Start Listening"
         onPress={async () => {
-          await startListening({ locale: 'de-DE' }).catch((error) => {
+          await startListening().catch((error) => {
             console.error('Error starting listening', error, error instanceof VoiceError ? error.details : null);
           });
         }}

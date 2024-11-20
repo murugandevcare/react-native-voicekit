@@ -5,10 +5,12 @@ import { VoiceEvent } from '../types';
 interface UseVoiceProps {
   // Whether to update the transcript on partial results. Defaults to false.
   enablePartialResults?: boolean;
+  // The locale to use for speech recognition. Defaults to 'en-US'.
+  locale?: string;
 }
 
 export function useVoice(props?: UseVoiceProps) {
-  const { enablePartialResults = false } = props ?? {};
+  const { enablePartialResults = false, locale = 'en-US' } = props ?? {};
 
   const [available, setAvailable] = useState(false);
   const [transcript, setTranscript] = useState<string>('');
@@ -29,9 +31,9 @@ export function useVoice(props?: UseVoiceProps) {
     setTranscript(newFinalResult);
   }, []);
 
-  const startListening = useCallback((...args: Parameters<typeof RNVoiceKit.startListening>) => {
-    return RNVoiceKit.startListening(...args);
-  }, []);
+  const startListening = useCallback(() => {
+    return RNVoiceKit.startListening({ locale });
+  }, [locale]);
 
   const stopListening = useCallback(() => {
     return RNVoiceKit.stopListening();
