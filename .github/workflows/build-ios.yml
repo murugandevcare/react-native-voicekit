@@ -26,6 +26,8 @@ jobs:
         run: yarn example pods
       - name: Install xcpretty
         run: gem install xcpretty
+      - name: Set .xcode.env.local
+        run: echo "export NODE_BINARY=$(printf '%q' "$(node -e 'console.log(process.execPath)')")" > ./example/ios/.xcode.env.local
       - name: Build app
         run: "set -o pipefail && xcodebuild \
           CC=clang CPLUSPLUS=clang++ LD=clang LDPLUSPLUS=clang++ \
