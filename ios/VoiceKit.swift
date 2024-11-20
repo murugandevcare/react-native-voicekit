@@ -49,6 +49,9 @@ class VoiceKit: NSObject, SFSpeechRecognizerDelegate {
   }
 
   private func startRecording(options: [String: Any], resolve: @escaping RCTPromiseResolveBlock, reject _: @escaping RCTPromiseRejectBlock) throws {
+    Logger.log(level: .info, message: "Starting recording")
+    Logger.log(level: .debug, message: "Options: \(options)")
+
     // Cancel any ongoing tasks
     recognitionTask?.cancel()
     recognitionTask = nil
@@ -70,6 +73,8 @@ class VoiceKit: NSObject, SFSpeechRecognizerDelegate {
     // Start recognition task
     recognitionTask = speechRecognizer?.recognitionTask(with: recognitionRequest!) { result, error in
       if let result {
+        Logger.log(level: .debug, message: "SpeechRecognizerResult received: \(result)")
+
         // Store the latest transcription
         self.lastTranscription = result.bestTranscription.formattedString
 
@@ -82,6 +87,7 @@ class VoiceKit: NSObject, SFSpeechRecognizerDelegate {
         // Reset the timer
         self.lastResultTimer?.invalidate()
         self.lastResultTimer = Timer.scheduledTimer(withTimeInterval: 2.0, repeats: false) { _ in
+          Logger.log(level: .debug, message: "Final result timer fired")
           if let finalTranscription = self.lastTranscription {
             VoiceKitEventEmitter.shared.sendEvent(
               withName: "RNVoiceKit.result",
@@ -99,9 +105,10 @@ class VoiceKit: NSObject, SFSpeechRecognizerDelegate {
         self.audioEngine.inputNode.removeTap(onBus: 0)
         self.recognitionRequest = nil
         self.recognitionTask = nil
-        print("Error: \(error)")
+        Logger.log(level: .error, message: "Error: \(error)")
         if let error = error as NSError?, error.domain == "kAFAssistantErrorDomain" && error.code == 1110 {
           // No speech detected - ignore
+          Logger.log(level: .debug, message: "No speech detected")
           return
         }
 
@@ -127,6 +134,7 @@ class VoiceKit: NSObject, SFSpeechRecognizerDelegate {
 
   @objc(stopListening:withRejecter:)
   func stopListening(resolve: @escaping RCTPromiseResolveBlock, reject _: @escaping RCTPromiseRejectBlock) {
+    Logger.log(level: .info, message: "Stopping recording")
     audioEngine.stop()
     audioEngine.inputNode.removeTap(onBus: 0)
     recognitionRequest?.endAudio()

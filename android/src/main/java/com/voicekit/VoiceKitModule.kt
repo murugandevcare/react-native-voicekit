@@ -35,6 +35,7 @@ class VoiceKitModule(reactContext: ReactApplicationContext) :
   fun startListening(options: ReadableMap, promise: Promise) {
     val currentActivity = currentActivity
     if (currentActivity == null) {
+      Log.e(TAG, "Activity is null")
       promise.reject(
         VoiceError.Unknown("Activity is null").code,
         VoiceError.Unknown("Activity is null").message
@@ -43,6 +44,7 @@ class VoiceKitModule(reactContext: ReactApplicationContext) :
     }
 
     // Check for permission
+    // TODO: We currently don't wait for the permission to be granted, but we should
     if (ContextCompat.checkSelfPermission(currentActivity, Manifest.permission.RECORD_AUDIO)
       != PackageManager.PERMISSION_GRANTED) {
       ActivityCompat.requestPermissions(
@@ -63,15 +65,18 @@ class VoiceKitModule(reactContext: ReactApplicationContext) :
         try {
           // Initialize speech recognizer if needed
           if (speechRecognizer == null) {
+            Log.d(TAG, "Initializing SpeechRecognizer")
             speechRecognizer = SpeechRecognizer.createSpeechRecognizer(reactApplicationContext)
           }
 
           // Set up recognition listener
           speechRecognizer?.setRecognitionListener(object : RecognitionListener {
-            override fun onReadyForSpeech(params: Bundle?) {}
+            override fun onReadyForSpeech(params: Bundle?) {
+              Log.d(TAG, "SpeechRecognizer event fired: onReadyForSpeech")
+            }
 
             override fun onBeginningOfSpeech() {
-              Log.d("VoiceKitModule", "onBeginningOfSpeech")
+              Log.d(TAG, "SpeechRecognizer event fired: onBeginningOfSpeech")
             }
 
             override fun onRmsChanged(rmsdB: Float) {}
@@ -79,11 +84,11 @@ class VoiceKitModule(reactContext: ReactApplicationContext) :
             override fun onBufferReceived(buffer: ByteArray?) {}
 
             override fun onEndOfSpeech() {
-              Log.d("VoiceKitModule", "onEndOfSpeech")
+              Log.d(TAG, "SpeechRecognizer event fired: onEndOfSpeech")
             }
 
             override fun onError(error: Int) {
-              Log.d("VoiceKitModule", "onError: $error")
+              Log.d(TAG, "SpeechRecognizer event fired: onError ($error)")
               val voiceError = when (error) {
                 SpeechRecognizer.ERROR_AUDIO -> VoiceError.RecordingStartFailed
                 SpeechRecognizer.ERROR_INSUFFICIENT_PERMISSIONS -> VoiceError.PermissionDenied
@@ -95,10 +100,16 @@ class VoiceKitModule(reactContext: ReactApplicationContext) :
                 SpeechRecognizer.ERROR_SPEECH_TIMEOUT -> VoiceError.Unknown("No speech input")
                 else -> VoiceError.Unknown("Unknown error occurred")
               }
-              promise.reject(voiceError.code, voiceError.message)
+
+              if (error != SpeechRecognizer.ERROR_NO_MATCH) {
+                sendEvent("RNVoiceKit.error", voiceError)
+              } else {
+                // TODO: If we're in continuous mode, we need to restart the recognition
+              }
             }
 
             override fun onResults(results: Bundle?) {
+              Log.d(TAG, "SpeechRecognizer event fired: onResults")
               val matches = results?.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION)
               if (matches != null && matches.isNotEmpty()) {
                 // Send final results
@@ -107,6 +118,8 @@ class VoiceKitModule(reactContext: ReactApplicationContext) :
             }
 
             override fun onPartialResults(partialResults: Bundle?) {
+              Log.d(TAG, "SpeechRecognizer event fired: onPartialResults")
+
               val matches = partialResults?.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION)
               if (matches != null && matches.isNotEmpty()) {
                 // Send partial results
@@ -132,10 +145,12 @@ class VoiceKitModule(reactContext: ReactApplicationContext) :
           speechRecognizer?.startListening(intent)
           promise.resolve(true)
         } catch (e: Exception) {
+          Log.e(TAG, "Error starting recording", e)
           promise.reject(VoiceError.RecognitionFailed.code, VoiceError.RecognitionFailed.message)
         }
       }
     } catch (e: Exception) {
+      Log.e(TAG, "Error starting recording", e)
       promise.reject(VoiceError.RecognitionFailed.code, VoiceError.RecognitionFailed.message)
     }
   }
@@ -150,10 +165,12 @@ class VoiceKitModule(reactContext: ReactApplicationContext) :
           speechRecognizer = null
           promise.resolve(true)
         } catch (e: Exception) {
+          Log.e(TAG, "Error stopping recording", e)
           promise.reject(VoiceError.RecognitionFailed.code, VoiceError.RecognitionFailed.message)
         }
       }
     } catch (e: Exception) {
+      Log.e(TAG, "Error stopping recording", e)
       promise.reject(VoiceError.RecognitionFailed.code, VoiceError.RecognitionFailed.message)
     }
   }
@@ -164,11 +181,13 @@ class VoiceKitModule(reactContext: ReactApplicationContext) :
       val available = SpeechRecognizer.isRecognitionAvailable(reactApplicationContext)
       promise.resolve(available)
     } catch (e: Exception) {
+      Log.w(TAG, "Error checking speech recognition availability, returning false", e)
       promise.resolve(false)
     }
   }
 
   companion object {
     const val NAME = "VoiceKit"
+    const val TAG = "VoiceKitModule"
   }
 }
