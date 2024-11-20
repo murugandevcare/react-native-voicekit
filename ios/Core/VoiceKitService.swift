@@ -26,6 +26,7 @@ class VoiceKitService: NSObject, SFSpeechRecognizerDelegate {
       delegate?.onListeningStateChanged(isListening)
     }
   }
+
   weak var delegate: VoiceKitServiceDelegate?
 
   override init() {
