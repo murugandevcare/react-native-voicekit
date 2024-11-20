@@ -12,10 +12,14 @@ import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import com.facebook.react.bridge.*
 import com.facebook.react.modules.core.DeviceEventManagerModule
+import android.content.Context
+import android.media.AudioManager
 
 class VoiceKitService(private val context: ReactApplicationContext) {
     private var speechRecognizer: SpeechRecognizer? = null
     private val PERMISSION_REQUEST_CODE = 1000
+    private var audioManager: AudioManager? = null
+    private var previousNotificationVolume: Int = 0
 
     private var isListening: Boolean = false
         set(value) {
@@ -31,7 +35,20 @@ class VoiceKitService(private val context: ReactApplicationContext) {
             .emit(eventName, params)
     }
 
-    fun startListening(options: ReadableMap): Boolean {
+    private fun muteRecognizerBeep() {
+        if (audioManager == null) {
+            audioManager = context.getSystemService(Context.AUDIO_SERVICE) as AudioManager
+        }
+        previousNotificationVolume = audioManager?.getStreamVolume(AudioManager.STREAM_MUSIC) ?: 0
+        audioManager?.setStreamVolume(AudioManager.STREAM_MUSIC, 0, AudioManager.FLAG_REMOVE_SOUND_AND_VIBRATE)
+    }
+
+    private fun unmuteRecognizerBeep() {
+        Log.d(TAG, "Unmuting recognizer beep")
+        audioManager?.setStreamVolume(AudioManager.STREAM_MUSIC, previousNotificationVolume, AudioManager.FLAG_ALLOW_RINGER_MODES)
+    }
+
+    fun startListening(options: ReadableMap, skipMuteBeep: Boolean = false): Boolean {
         val currentActivity = context.currentActivity
         if (currentActivity == null) {
             Log.e(TAG, "Activity is null")
@@ -51,7 +68,6 @@ class VoiceKitService(private val context: ReactApplicationContext) {
 
         // Initialize speech recognizer if needed
         if (speechRecognizer == null) {
-            Log.d(TAG, "Initializing SpeechRecognizer")
             speechRecognizer = SpeechRecognizer.createSpeechRecognizer(context)
         }
 
@@ -68,6 +84,11 @@ class VoiceKitService(private val context: ReactApplicationContext) {
             }
         }
 
+        // Mute beep sound before starting recognition
+        if (!skipMuteBeep) {
+            muteRecognizerBeep()
+        }
+
         // Start listening
         speechRecognizer?.startListening(intent)
 
@@ -81,6 +102,16 @@ class VoiceKitService(private val context: ReactApplicationContext) {
         speechRecognizer?.destroy()
         speechRecognizer = null
         isListening = false
+
+        // Restore audio volume when stopping
+        unmuteRecognizerBeep()
+    }
+
+    private fun restartRecognizer(options: ReadableMap) {
+        speechRecognizer?.stopListening()
+        speechRecognizer?.destroy()
+        speechRecognizer = null
+        startListening(options, skipMuteBeep = true)
     }
 
     private fun createRecognitionListener(options: ReadableMap): RecognitionListener {
@@ -99,11 +130,9 @@ class VoiceKitService(private val context: ReactApplicationContext) {
 
             override fun onEndOfSpeech() {
                 Log.d(TAG, "SpeechRecognizer event fired: onEndOfSpeech")
-                if (options.hasKey("mode") && options.getString("mode") == "continuous") {
-                    // TODO: We're in continuous mode, restart the recognizer
-                } else {
-                    // TODO: We're in single mode and the recognizer stopped, send listening state change
-                    isListening = false
+                if (!options.hasKey("mode") || options.getString("mode") == "single") {
+                    // We're in single mode and the recognizer stopped, clean-up
+                    stopListening()
                 }
             }
 
@@ -125,8 +154,12 @@ class VoiceKitService(private val context: ReactApplicationContext) {
                     // An error occurred that we can't recover from, send error and notify of listening state change
                     sendEvent("RNVoiceKit.error", voiceError)
                     isListening = false
+
+                    // Restore audio volume when erroring out
+                    unmuteRecognizerBeep()
                 } else {
-                  // TODO: We need to restart the recognizer
+                    // Always restart the recognizer if the recognition stopped due to no speech detected / no match
+                    restartRecognizer(options)
                 }
             }
 
@@ -135,6 +168,10 @@ class VoiceKitService(private val context: ReactApplicationContext) {
                 val matches = results?.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION)
                 if (matches != null && matches.isNotEmpty()) {
                     sendEvent("RNVoiceKit.result", matches[0])
+                }
+                if (options.hasKey("mode") && options.getString("mode") == "continuous") {
+                    // We're in continuous mode, restart the recognizer
+                    restartRecognizer(options)
                 }
             }
 
