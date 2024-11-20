@@ -1,10 +1,11 @@
 import { StyleSheet, View, Text, Button } from 'react-native';
-import { VoiceError, useVoice } from 'react-native-voicekit';
+import { VoiceError, VoiceMode, useVoice } from 'react-native-voicekit';
 
 export default function App() {
   const { available, transcript, startListening, stopListening, resetTranscript } = useVoice({
     locale: 'en-US',
     enablePartialResults: false,
+    mode: VoiceMode.Continuous,
   });
 
   return (

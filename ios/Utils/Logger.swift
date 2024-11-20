@@ -32,14 +32,20 @@ enum Logger {
   }
 
   /**
-   * Logs a message to the console using the format `VoiceKit.[caller-function]: [message]`
+   * Logs a message to the console using the format `VoiceKit.[caller-class].[caller-function]: [message]`
    */
   @inlinable
   static func log(level: LogLevel,
                   message: String,
-                  _ function: String = #function) {
+                  _ function: String = #function,
+                  _ fileID: String = #fileID) {
     let now = Date()
     let time = formatter.string(from: now)
-    print("\(time): [\(level.rawValue)] VoiceKit.\(function): \(message)")
+
+    // Extract class name from fileID
+    let components = fileID.split(separator: "/")
+    let className = components.last?.split(separator: ".").first ?? "Unknown"
+
+    print("\(time): [\(level.rawValue)] VoiceKit.\(className).\(function): \(message)")
   }
 }

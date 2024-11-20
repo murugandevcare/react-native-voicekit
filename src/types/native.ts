@@ -3,7 +3,7 @@ export enum VoiceErrorCode {
 }
 
 export default interface NativeRNVoiceKit {
-  startListening: (options: { locale?: string }) => Promise<void>;
+  startListening: (options: { locale?: string; mode?: 'continuous' | 'single' }) => Promise<void>;
   stopListening: () => Promise<void>;
   isSpeechRecognitionAvailable: () => Promise<boolean>;
 }

@@ -2,8 +2,8 @@ package com.voicekit
 
 sealed class VoiceError(
     val code: String,
-    val message: String
-) {
+    message: String
+) : Exception(message) {
     object SpeechRecognizerNotAvailable : VoiceError(
         "ERR_SPEECH_RECOGNIZER_NOT_AVAILABLE",
         "Speech recognition is not available on this device"
@@ -32,4 +32,4 @@ sealed class VoiceError(
         "ERR_UNKNOWN",
         message
     )
-} 
+}

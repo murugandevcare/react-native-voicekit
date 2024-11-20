@@ -3,7 +3,7 @@ import { NativeEventEmitter, NativeModules, Platform } from 'react-native';
 import RNVoiceError from './utils/VoiceError';
 import { VoiceErrorCode } from './types/native';
 import { VoiceEvent } from './types';
-import type { VoiceEventMap } from './types';
+import type { VoiceEventMap, VoiceMode } from './types';
 
 const LINKING_ERROR =
   `The package 'react-native-voicekit' doesn't seem to be linked. Make sure: \n\n` +
@@ -57,7 +57,7 @@ class RNVoiceKit {
     }
   }
 
-  async startListening(options?: { locale?: string }): Promise<void> {
+  async startListening(options?: { locale?: string; mode?: VoiceMode }): Promise<void> {
     await nativeInstance.startListening(options ?? {});
   }
 

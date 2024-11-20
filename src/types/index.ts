@@ -11,3 +11,8 @@ export interface VoiceEventMap extends Record<VoiceEvent, any[]> {
   [VoiceEvent.AvailabilityChange]: [boolean];
   [VoiceEvent.Error]: any[];
 }
+
+export enum VoiceMode {
+  Continuous = 'continuous',
+  Single = 'single',
+}

@@ -1,16 +1,22 @@
 import { useCallback, useEffect, useState } from 'react';
 import RNVoiceKit from '../RNVoiceKit';
-import { VoiceEvent } from '../types';
+import { VoiceEvent, VoiceMode } from '../types';
 
 interface UseVoiceProps {
-  // Whether to update the transcript on partial results. Defaults to false.
+  /** Whether to update the transcript on partial results. Defaults to false. */
   enablePartialResults?: boolean;
-  // The locale to use for speech recognition. Defaults to 'en-US'.
+  /** The locale to use for speech recognition. Defaults to 'en-US'. */
   locale?: string;
+  /**
+   * The mode to use for speech recognition. When 'continuous', the speech recognition will continue until it is stopped
+   * or an error occurs. When 'single', the speech recognition will stop after the first final speech result is
+   * returned. Defaults to 'single'.
+   */
+  mode?: VoiceMode;
 }
 
 export function useVoice(props?: UseVoiceProps) {
-  const { enablePartialResults = false, locale = 'en-US' } = props ?? {};
+  const { enablePartialResults = false, locale = 'en-US', mode = VoiceMode.Continuous } = props ?? {};
 
   const [available, setAvailable] = useState(false);
   const [transcript, setTranscript] = useState<string>('');
@@ -32,8 +38,8 @@ export function useVoice(props?: UseVoiceProps) {
   }, []);
 
   const startListening = useCallback(() => {
-    return RNVoiceKit.startListening({ locale });
-  }, [locale]);
+    return RNVoiceKit.startListening({ locale, mode });
+  }, [locale, mode]);
 
   const stopListening = useCallback(() => {
     return RNVoiceKit.stopListening();
