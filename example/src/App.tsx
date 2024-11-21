@@ -19,8 +19,9 @@ export default function App() {
             console.error('Error starting listening', error, error instanceof VoiceError ? error.details : null);
           });
         }}
+        disabled={!available || listening}
       />
-      <Button title="Stop Listening" onPress={() => stopListening()} />
+      <Button title="Stop Listening" onPress={() => stopListening()} disabled={!listening} />
       <Button title="Reset Transcript" onPress={() => resetTranscript()} />
       <Text>Transcript: {transcript}</Text>
     </View>

@@ -15,6 +15,7 @@ enum VoiceError: Error {
   case permissionDenied
   case permissionRestricted
   case permissionNotDetermined
+  case invalidState
   case unknown(message: String = "An unknown error occurred")
 
   var code: String {
@@ -25,6 +26,7 @@ enum VoiceError: Error {
     case .permissionDenied: "ERR_PERMISSION_DENIED"
     case .permissionRestricted: "ERR_PERMISSION_RESTRICTED"
     case .permissionNotDetermined: "ERR_PERMISSION_NOT_DETERMINED"
+    case .invalidState: "ERR_INVALID_STATE"
     case .unknown: "ERR_UNKNOWN"
     }
   }
@@ -43,6 +45,8 @@ enum VoiceError: Error {
       "Speech recognition is restricted on this device"
     case .permissionNotDetermined:
       "Speech recognition permission was not yet determined"
+    case .invalidState:
+      "Invalid state, cannot perform action"
     case let .unknown(message):
       message
     }

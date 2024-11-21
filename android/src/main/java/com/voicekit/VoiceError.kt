@@ -28,6 +28,10 @@ sealed class VoiceError(
     "ERR_PERMISSION_NOT_DETERMINED",
     "Speech recognition permission was not yet determined"
   )
+  object InvalidState : VoiceError(
+    "ERR_INVALID_STATE",
+    "Invalid state, cannot perform action"
+  )
   class Unknown(message: String = "An unknown error occurred") : VoiceError(
     "ERR_UNKNOWN",
     message

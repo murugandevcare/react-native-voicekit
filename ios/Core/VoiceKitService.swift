@@ -42,6 +42,12 @@ class VoiceKitService: NSObject, SFSpeechRecognizerDelegate {
     Logger.log(level: .info, message: "Starting recording")
     Logger.log(level: .debug, message: "Options: \(options)")
 
+    if isListening {
+      Logger.log(level: .warning, message: "Already listening, aborting startRecording")
+      delegate?.onError(.invalidState)
+      return
+    }
+
     // Cancel any ongoing tasks
     recognitionTask?.cancel()
     recognitionTask = nil
@@ -64,11 +70,21 @@ class VoiceKitService: NSObject, SFSpeechRecognizerDelegate {
     recognitionTask = speechRecognizer?.recognitionTask(with: recognitionRequest!) { [weak self] result, error in
       guard let self else { return }
 
-      if let result {
-        Logger.log(level: .debug, message: "SpeechRecognizerResult received: \(result)")
+      if error != nil {
+        handleError(error)
+      }
 
+      if let result {
         // Store the latest transcription
         lastTranscription = result.bestTranscription.formattedString
+
+        // if trimmed lastTranscription is empty, stop and dont do anything
+        if lastTranscription?.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ?? true {
+          Logger.log(level: .debug, message: "Last transcription is empty, stopping")
+          return
+        }
+
+        Logger.log(level: .debug, message: "SpeechRecognizerResult received: \(lastTranscription)")
 
         // Emit partial results
         delegate?.onPartialResult(lastTranscription ?? "")
@@ -87,10 +103,6 @@ class VoiceKitService: NSObject, SFSpeechRecognizerDelegate {
             delegate?.onResult(finalTranscription)
           }
         }
-      }
-
-      if error != nil {
-        handleError(error)
       }
     }
 
@@ -128,6 +140,13 @@ class VoiceKitService: NSObject, SFSpeechRecognizerDelegate {
 
   func stopRecording() {
     Logger.log(level: .info, message: "Stopping recording")
+
+    if !isListening {
+      Logger.log(level: .warning, message: "Not listening, aborting stopRecording")
+      delegate?.onError(.invalidState)
+      return
+    }
+
     audioEngine.stop()
     audioEngine.inputNode.removeTap(onBus: 0)
     recognitionRequest?.endAudio()

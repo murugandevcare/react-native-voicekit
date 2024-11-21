@@ -59,11 +59,17 @@ class VoiceKitService(private val context: ReactApplicationContext) {
     audioManager?.setStreamVolume(AudioManager.STREAM_NOTIFICATION, previousNotificationVolume, AudioManager.FLAG_ALLOW_RINGER_MODES)
   }
 
-  fun startListening(options: ReadableMap, skipMuteBeep: Boolean = false): Boolean {
+  fun startListening(options: ReadableMap, skipMuteBeep: Boolean = false) {
     val currentActivity = context.currentActivity
     if (currentActivity == null) {
       Log.e(TAG, "Activity is null")
       throw VoiceError.Unknown("Activity is null")
+    }
+
+    if (isListening) {
+      Log.w(TAG, "Already listening, aborting startListening")
+      sendEvent("RNVoiceKit.error", VoiceError.InvalidState)
+      return
     }
 
     this.options = options
@@ -114,10 +120,16 @@ class VoiceKitService(private val context: ReactApplicationContext) {
 
     isListening = true
 
-    return true
+    return
   }
 
   fun stopListening() {
+    if (!isListening) {
+      Log.w(TAG, "Not listening, aborting stopListening")
+      sendEvent("RNVoiceKit.error", VoiceError.InvalidState)
+      return
+    }
+
     lastResultTimer?.removeCallbacksAndMessages(null)
     lastResultTimer = null
     lastTranscription = null
