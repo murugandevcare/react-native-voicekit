@@ -4,7 +4,7 @@
   "description": "🎤 Recognize and transcribe speech using React Native",
   "main": "lib/commonjs/index",
   "module": "lib/module/index",
-  "types": "lib/typescript/module/src/index.d.ts",
+  "types": "lib/typescript/src/index.d.ts",
   "react-native": "src/index",
   "source": "src/index",
   "files": [
@@ -74,7 +74,7 @@
     "prettier": "^3.0.3",
     "react": "18.3.1",
     "react-native": "0.75.4",
-    "react-native-builder-bob": "^0.32.1",
+    "react-native-builder-bob": "^0.33.1",
     "release-it": "^17.10.0",
     "turbo": "^1.10.7",
     "typescript": "^5.2.2"
@@ -185,7 +185,7 @@
         "typescript",
         {
           "project": "tsconfig.build.json",
-          "esm": true
+          "esm": false
         }
       ]
     ]
