@@ -24,6 +24,7 @@
     "ios",
     "cpp",
     "*.podspec",
+    "app.plugin.js",
     "react-native.config.js",
     "!ios/build",
     "!android/build",
@@ -67,6 +68,7 @@
   "devDependencies": {
     "@commitlint/config-conventional": "^17.0.2",
     "@evilmartians/lefthook": "^1.5.0",
+    "@expo/config-plugins": "^9.0.10",
     "@react-native-community/cli": "15.0.1",
     "@react-native/eslint-config": "^0.73.1",
     "@release-it/conventional-changelog": "^9.0.2",
