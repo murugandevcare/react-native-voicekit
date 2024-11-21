@@ -1,7 +1,8 @@
 import { AndroidConfig, type ConfigPlugin, createRunOncePlugin, withInfoPlist } from '@expo/config-plugins';
 import type { RNVoiceKitConfigPluginOptions } from './types';
 
-const pkg = require('../../package.json');
+// from lib directory, package.json is three levels up
+const pkg = require('../../../package.json');
 
 const DEFAULT_MICROPHONE_PERMISSION = 'Allow $(PRODUCT_NAME) to access the microphone to recognize your voice.';
 const DEFAULT_SPEECH_RECOGNITION_PERMISSION = 'Allow $(PRODUCT_NAME) to securely recognize your voice.';
