@@ -4,7 +4,7 @@
   "description": "🎤 Recognize and transcribe speech using React Native",
   "main": "lib/commonjs/index",
   "module": "lib/module/index",
-  "types": "lib/typescript/index.d.ts",
+  "types": "lib/typescript/module/src/index.d.ts",
   "react-native": "src/index",
   "source": "src/index",
   "files": [
