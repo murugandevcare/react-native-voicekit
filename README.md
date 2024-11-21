@@ -1,11 +1,20 @@
-# 🎤 react-native-voicekit
+# 🎙️ react-native-voicekit
 
-Recognize and transcribe user speech using React Native.
+VoiceKit is a powerful speech recognition library for React Native that enables voice transcription across platforms. It provides direct access to native speech recognition APIs for optimal performance and aligns the API behavior between the different platforms.
 
 ![npm bundle size](https://img.shields.io/bundlephobia/min/react-native-voicekit?style=flat-square) ![GitHub](https://img.shields.io/github/license/kuatsu/react-native-voicekit?style=flat-square) ![GitHub last commit](https://img.shields.io/github/last-commit/kuatsu/react-native-voicekit?style=flat-square)
 
 > [!WARNING]
 > This project is still considered unstable and under active development. The API might change drastically in new versions. Please proceed with caution.
+
+- ⚡ Real-time speech-to-text transcription
+- 📱 iOS and Android support using native speech recognition APIs
+- 🧪 Fully compatible with Expo
+- ⚡ iOS and Android APIs aligned for consistent behavior and superior developer experience
+- 🎛️ Single and continuous recognition modes
+- 🎨 Simple and intuitive React Hooks API
+- 💪 TypeScript support out of the box
+- 👌 Lightweight with zero dependencies
 
 ## Installation
 
@@ -22,7 +31,23 @@ cd ios && pod install
 npx expo install react-native-voicekit
 ```
 
-Afterwards, add the config plugin to the `plugins` section of your `app.json` and `expo prebuild` or rebuild your development client.
+Afterwards, add the config plugin to the `plugins` section of your `app.json`:
+
+```json
+{
+  "plugins": [
+    [
+      "react-native-voicekit",
+      {
+        "speechRecognitionPermission": "Custom iOS speech recognition permission message (optional)",
+        "microphonePermission": "Custom iOS microphone permission message (optional)"
+      }
+    ]
+  ]
+}
+```
+
+Finally, `expo prebuild` or rebuild your development client.
 
 ## Quick Start
 
