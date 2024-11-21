@@ -15,8 +15,9 @@ export interface VoiceEventMap extends Record<VoiceEvent, any[]> {
 }
 
 export enum VoiceMode {
-  Continuous = 'continuous',
   Single = 'single',
+  Continuous = 'continuous',
+  ContinuousAndStop = 'continuous-and-stop',
 }
 
 export interface VoiceStartListeningOptions {
@@ -25,16 +26,24 @@ export interface VoiceStartListeningOptions {
    */
   locale?: string;
   /**
-   * The mode to use for speech recognition. Can either be `continuous` or `single`. When set to `continuous`, the
-   * speech recognizer will continue to listen until stopped manually or an error occurs and will emit regular
-   * `partial-result` events. When the user stops speaking, it will also emit a `result` event. When set to `single`,
-   * the recognizer will automatically stop after the first utterance and emit a `result` event. Defaults to `single`.
+   * The mode to use for speech recognition. Can either be `continuous` or `single`.
+   *
+   * - `single`: The speech recognizer will automatically stop after the first utterance or after a period of silence.
+   * This period is device-specific and is generally much shorter on Android than on iOS. To continue listening until
+   * the user has spoken, use `continuous-and-stop` instead.
+   * - `continuous`: The speech recognizer will continue to listen until stopped manually or an error occurs and will
+   * emit regular `partial-result` events. When the user stops speaking, it will emit a `result` event and continue
+   * listening for more speech.
+   * - `continuous-and-stop`: The speech recognizer will continue to listen until stopped manually, an error occurs or
+   * after the first utterance. When the user stops speaking, it will emit a `result` event and stop listening.
+   *
+   * Defaults to `single`.
    */
   mode?: VoiceMode;
   /**
    * Whether to try and mute the beep sound Android makes when starting and stopping the speech recognizer. This will
-   * mute the device's music audio stream when starting to listen and unmute it when stopping. This does not work on
-   * all devices. Defaults to `false`.
+   * mute the device's music and notification audio streams when starting to listen and unmute them when stopping. This
+   * does not work on all devices. Defaults to `false`.
    */
   muteAndroidBeep?: boolean;
 }

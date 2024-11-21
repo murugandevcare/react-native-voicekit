@@ -4,7 +4,7 @@ import { VoiceError, VoiceMode, useVoice } from 'react-native-voicekit';
 export default function App() {
   const { available, listening, transcript, startListening, stopListening, resetTranscript } = useVoice({
     locale: 'en-US',
-    enablePartialResults: false,
+    enablePartialResults: true,
     mode: VoiceMode.Continuous,
   });
 

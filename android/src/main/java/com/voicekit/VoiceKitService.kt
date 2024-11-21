@@ -96,7 +96,7 @@ class VoiceKitService(private val context: ReactApplicationContext) {
         putExtra(RecognizerIntent.EXTRA_LANGUAGE, options.getString("locale"))
       }
 
-      if (options.hasKey("mode") && options.getString("mode") == "continuous") {
+      if (options.hasKey("mode") && (options.getString("mode") == "continuous" || options.getString("mode") == "continuous-and-stop")) {
         // TODO: On Android 13+, we might be able to use a custom audio source to improve continuous mode
         putExtra(RecognizerIntent.EXTRA_SPEECH_INPUT_COMPLETE_SILENCE_LENGTH_MILLIS, 600000)
         putExtra(RecognizerIntent.EXTRA_SPEECH_INPUT_MINIMUM_LENGTH_MILLIS, 600000)
@@ -214,16 +214,27 @@ class VoiceKitService(private val context: ReactApplicationContext) {
         val matches = partialResults?.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION)
         if (matches != null && matches.isNotEmpty()) {
           lastTranscription = matches[0]
+
+          // Check if the partial result is empty, if so, don't do anything
+          if (lastTranscription?.trim()?.isEmpty() == true) {
+            return
+          }
+
           sendEvent("RNVoiceKit.partial-result", lastTranscription)
+          Log.d(TAG, "Partial result: $lastTranscription")
 
           // Reset timer for continuous mode
-          if (options.hasKey("mode") && options.getString("mode") == "continuous") {
+          if (options.hasKey("mode") && (options.getString("mode") == "continuous" || options.getString("mode") == "continuous-and-stop")) {
             // When we're in continuous mode, we want to send the final result if there's no more speech input for 1s
             lastResultTimer?.removeCallbacksAndMessages(null)
             lastResultTimer = Handler(Looper.getMainLooper()).apply {
               postDelayed({
                 lastTranscription?.let { transcription ->
                   sendEvent("RNVoiceKit.result", transcription)
+                }
+
+                if (options.getString("mode") == "continuous-and-stop") {
+                  stopListening()
                 }
               }, 1000)
             }

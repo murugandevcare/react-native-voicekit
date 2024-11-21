@@ -79,8 +79,8 @@ class VoiceKitService: NSObject, SFSpeechRecognizerDelegate {
           guard let self else { return }
           Logger.log(level: .debug, message: "Final result timer fired")
           if let finalTranscription = lastTranscription {
-            // If options.mode is 'single' or if mode is not provided, stop the recording
-            if let mode = options["mode"] as? String, mode == "single" || mode == nil {
+            // If options.mode is 'single', 'continuous-and-stop' or if mode is not provided, stop the recording
+            if let mode = options["mode"] as? String, mode == "single" || mode == "continuous-and-stop" || mode == nil {
               stopRecording()
             }
 
