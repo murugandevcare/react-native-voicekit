@@ -53,4 +53,12 @@ export interface VoiceStartListeningOptions {
    * does not work on all devices. Defaults to `false`.
    */
   muteAndroidBeep?: boolean;
+  /**
+   * Whether to force usage of the on-device speech recognizer. Does not have any effect on iOS. Only works on Android
+   * 13 and above. Defaults to `false`.
+   * Note: When using the on-device recognizer, some locales returned by `getSupportedLocales()` may not be installed
+   * on the device yet and need to be installed first.
+   * TODO: Add a method to install locales for the Android on-device recognizer
+   */
+  useOnDeviceRecognizer?: boolean;
 }

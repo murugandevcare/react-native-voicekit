@@ -57,23 +57,49 @@ class RNVoiceKit {
     }
   }
 
+  /**
+   * Starts listening for speech.
+   *
+   * @param options - The options to start listening with.
+   */
   async startListening(options?: VoiceStartListeningOptions): Promise<void> {
+    const defaultOptions: Required<VoiceStartListeningOptions> = {
+      locale: 'en-US',
+      mode: VoiceMode.Continuous,
+      silenceTimeoutMs: 1000,
+      muteAndroidBeep: false,
+      useOnDeviceRecognizer: false,
+    };
+
     await nativeInstance.startListening({
-      locale: options?.locale ?? 'en-US',
-      mode: options?.mode ?? VoiceMode.Continuous,
-      silenceTimeoutMs: options?.silenceTimeoutMs ?? 1000,
-      muteAndroidBeep: options?.muteAndroidBeep ?? false,
+      ...defaultOptions,
+      ...options,
     });
   }
 
+  /**
+   * Stops listening for speech.
+   */
   async stopListening(): Promise<void> {
     await nativeInstance.stopListening();
   }
 
+  /**
+   * Checks if a speech recognizer is available on the device.
+   *
+   * @returns Whether a speech recognizer is available.
+   */
   async isAvailable(): Promise<boolean> {
     return await nativeInstance.isSpeechRecognitionAvailable();
   }
 
+  /**
+   * Gets the list of supported locales for speech recognition. On Android, this gets the list of
+   * supported locales for the on-device speech recognizer.
+   * Does not work on Android versions below 13 and will return an empty array for those versions.
+   *
+   * @returns The list of supported locales.
+   */
   async getSupportedLocales(): Promise<string[]> {
     return await nativeInstance.getSupportedLocales();
   }

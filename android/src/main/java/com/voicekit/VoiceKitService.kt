@@ -66,6 +66,20 @@ class VoiceKitService(private val context: ReactApplicationContext) {
     audioManager?.setStreamVolume(AudioManager.STREAM_NOTIFICATION, previousNotificationVolume, AudioManager.FLAG_ALLOW_RINGER_MODES)
   }
 
+  private fun createSpeechRecognizer(options: ReadableMap): SpeechRecognizer? {
+    val value =
+      when {
+        Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU && options.getBoolean("useOnDeviceRecognizer") -> {
+          SpeechRecognizer.createOnDeviceSpeechRecognizer(context)
+        }
+        else -> {
+          SpeechRecognizer.createSpeechRecognizer(context)
+        }
+      }
+
+    return value
+  }
+
   fun startListening(options: ReadableMap, skipMuteBeep: Boolean = false) {
     val currentActivity = context.currentActivity
     if (currentActivity == null) {
@@ -93,9 +107,7 @@ class VoiceKitService(private val context: ReactApplicationContext) {
     }
 
     // Initialize speech recognizer if needed
-    if (speechRecognizer == null) {
-      speechRecognizer = SpeechRecognizer.createSpeechRecognizer(context)
-    }
+    speechRecognizer = createSpeechRecognizer(options)
 
     // Set up recognition listener
     speechRecognizer?.setRecognitionListener(createRecognitionListener())
@@ -286,8 +298,13 @@ class VoiceKitService(private val context: ReactApplicationContext) {
             override fun onSupportResult(recognitionSupport: RecognitionSupport) {
               Log.d(TAG, "getSupportedLocales() onSupportResult called with recognitionSupport $recognitionSupport")
 
+              // TODO: We need a method to download supported but not installed locales, then we can send mergedLocales
+              val installedLocales = recognitionSupport.installedOnDeviceLanguages
               val supportedLocales = recognitionSupport.supportedOnDeviceLanguages // not necessarily installed for on-device recognition
-              callback(supportedLocales?.map { it.toString() } ?: emptyList())
+
+              val mergedLocales = (installedLocales + supportedLocales).distinct().sorted()
+
+              callback(installedLocales?.map { it.toString() } ?: emptyList())
 
               tempSpeechRecognizer.destroy()
             }

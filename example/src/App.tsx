@@ -12,11 +12,15 @@ export default function App() {
     enablePartialResults: true,
     mode: VoiceMode.Continuous,
     silenceTimeoutMs: 1000,
+    useOnDeviceRecognizer: true,
   });
 
   useEffect(() => {
-    VoiceKit.getSupportedLocales().then((locales) => setSupportedLocales(locales.sort()));
-  }, []);
+    VoiceKit.getSupportedLocales().then((locales) => {
+      setSupportedLocales(locales.sort());
+      setLocale((currentLocale) => (locales.includes(currentLocale) ? currentLocale : (locales[0] ?? 'en-US')));
+    });
+  }, [locale]);
 
   return (
     <View style={styles.container}>
