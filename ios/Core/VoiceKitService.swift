@@ -159,4 +159,8 @@ class VoiceKitService: NSObject, SFSpeechRecognizerDelegate {
   func isAvailable() -> Bool {
     speechRecognizer?.isAvailable ?? false
   }
+
+  func getSupportedLocales() -> [String] {
+    SFSpeechRecognizer.supportedLocales().map(\.identifier)
+  }
 }

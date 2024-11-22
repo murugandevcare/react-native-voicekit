@@ -15,4 +15,5 @@ export default interface NativeRNVoiceKit {
   startListening: (options: Required<VoiceStartListeningOptions>) => Promise<void>;
   stopListening: () => Promise<void>;
   isSpeechRecognitionAvailable: () => Promise<boolean>;
+  getSupportedLocales: () => Promise<string[]>;
 }

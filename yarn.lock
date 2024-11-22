@@ -10737,6 +10737,18 @@ __metadata:
   languageName: node
   linkType: hard
 
+"react-native-element-dropdown@npm:^2.12.2":
+  version: 2.12.2
+  resolution: "react-native-element-dropdown@npm:2.12.2"
+  dependencies:
+    lodash: ^4.17.21
+  peerDependencies:
+    react: "*"
+    react-native: "*"
+  checksum: 5ed1d909d04f8adb693f382618adcb5878233ae7ca4f94225a789223aca94abd5b56239a19d9c8d3099161c8aaf4d398fdfd54c52815a40a52b3a3dd1e70c698
+  languageName: node
+  linkType: hard
+
 "react-native-voicekit-example@workspace:example":
   version: 0.0.0-use.local
   resolution: "react-native-voicekit-example@workspace:example"
@@ -10750,6 +10762,7 @@ __metadata:
     react: 18.3.1
     react-native: 0.75.4
     react-native-builder-bob: ^0.32.1
+    react-native-element-dropdown: ^2.12.2
   languageName: unknown
   linkType: soft
 

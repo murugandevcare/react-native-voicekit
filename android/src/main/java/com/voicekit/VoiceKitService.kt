@@ -8,6 +8,8 @@ import android.os.Bundle
 import android.speech.RecognitionListener
 import android.speech.RecognizerIntent
 import android.speech.SpeechRecognizer
+import android.speech.RecognitionSupport
+import android.speech.RecognitionSupportCallback
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import com.facebook.react.bridge.*
@@ -16,6 +18,11 @@ import android.content.Context
 import android.media.AudioManager
 import android.os.Handler
 import android.os.Looper
+import android.content.BroadcastReceiver
+import android.app.Activity
+import android.os.Build
+import androidx.annotation.RequiresApi
+import java.util.concurrent.Executors
 
 class VoiceKitService(private val context: ReactApplicationContext) {
   private var speechRecognizer: SpeechRecognizer? = null
@@ -255,6 +262,46 @@ class VoiceKitService(private val context: ReactApplicationContext) {
       }
 
       override fun onEvent(eventType: Int, params: Bundle?) {}
+    }
+  }
+
+  fun getSupportedLocales(context: Context, callback: (List<String>) -> Unit) {
+    Log.d(TAG, "Getting supported locales")
+
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+      // On Android 13+, we can get the list from the on-device recognizer
+      // TODO: The on-device supported locales are not necessarily the ones we can use for the standard recognizer
+      // We need to improve the usage of the default recognizer & on-device recognizer for both Android 13+ and <13
+
+      // On-device speech Recognizer can only be ran on main thread
+      Handler(context.mainLooper).post {
+        val tempSpeechRecognizer = SpeechRecognizer.createOnDeviceSpeechRecognizer(context)
+        val intent = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH)
+
+        tempSpeechRecognizer?.checkRecognitionSupport(
+          intent,
+          Executors.newSingleThreadExecutor(),
+          @RequiresApi(Build.VERSION_CODES.TIRAMISU)
+          object : RecognitionSupportCallback {
+            override fun onSupportResult(recognitionSupport: RecognitionSupport) {
+              Log.d(TAG, "getSupportedLocales() onSupportResult called with recognitionSupport $recognitionSupport")
+
+              val supportedLocales = recognitionSupport.supportedOnDeviceLanguages // not necessarily installed for on-device recognition
+              callback(supportedLocales?.map { it.toString() } ?: emptyList())
+
+              tempSpeechRecognizer.destroy()
+            }
+
+            override fun onError(error: Int) {
+              Log.d(TAG, "getSupportedLocales() onError called with error $error")
+              tempSpeechRecognizer.destroy()
+            }
+          },
+        )
+      }
+    } else {
+      // TODO: Implement fallback for Android <13
+      callback(emptyList())
     }
   }
 

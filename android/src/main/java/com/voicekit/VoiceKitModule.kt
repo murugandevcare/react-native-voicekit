@@ -63,6 +63,20 @@ class VoiceKitModule(reactContext: ReactApplicationContext) :
     }
   }
 
+  @ReactMethod
+  fun getSupportedLocales(promise: Promise) {
+    try {
+      voiceKitService.getSupportedLocales(reactApplicationContext) { locales ->
+        val writableArray = Arguments.createArray()
+        locales.forEach { writableArray.pushString(it) }
+        promise.resolve(writableArray)
+      }
+    } catch (e: Exception) {
+      Log.e(TAG, "Error getting supported locales", e)
+      promise.reject(VoiceError.RecognitionFailed.code, "Failed to get supported locales")
+    }
+  }
+
   companion object {
     const val NAME = "VoiceKit"
     private const val TAG = "VoiceKitModule"

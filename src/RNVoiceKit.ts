@@ -74,6 +74,10 @@ class RNVoiceKit {
     return await nativeInstance.isSpeechRecognitionAvailable();
   }
 
+  async getSupportedLocales(): Promise<string[]> {
+    return await nativeInstance.getSupportedLocales();
+  }
+
   addListener<T extends VoiceEvent>(event: T, listener: (...args: VoiceEventMap[T]) => void) {
     if (!this.listeners[event]) {
       this.listeners[event] = [];
