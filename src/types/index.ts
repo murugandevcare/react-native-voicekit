@@ -41,6 +41,13 @@ export interface VoiceStartListeningOptions {
    */
   mode?: VoiceMode;
   /**
+   * The period of silence after the user stops speaking before the speech recognizer emits a `result` event.
+   * Provided in milliseconds.
+   *
+   * Defaults to 1000.
+   */
+  silenceTimeoutMs?: number;
+  /**
    * Whether to try and mute the beep sound Android makes when starting and stopping the speech recognizer. This will
    * mute the device's music and notification audio streams when starting to listen and unmute them when stopping. This
    * does not work on all devices. Defaults to `false`.

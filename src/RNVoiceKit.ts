@@ -2,7 +2,7 @@ import type NativeRNVoiceKit from './types/native';
 import { NativeEventEmitter, NativeModules, Platform } from 'react-native';
 import RNVoiceError from './utils/VoiceError';
 import { VoiceErrorCode } from './types/native';
-import { VoiceEvent } from './types';
+import { VoiceEvent, VoiceMode } from './types';
 import type { VoiceEventMap, VoiceStartListeningOptions } from './types';
 
 const LINKING_ERROR =
@@ -58,7 +58,12 @@ class RNVoiceKit {
   }
 
   async startListening(options?: VoiceStartListeningOptions): Promise<void> {
-    await nativeInstance.startListening(options ?? {});
+    await nativeInstance.startListening({
+      locale: options?.locale ?? 'en-US',
+      mode: options?.mode ?? VoiceMode.Continuous,
+      silenceTimeoutMs: options?.silenceTimeoutMs ?? 1000,
+      muteAndroidBeep: options?.muteAndroidBeep ?? false,
+    });
   }
 
   async stopListening(): Promise<void> {

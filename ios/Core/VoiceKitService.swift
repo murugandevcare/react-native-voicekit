@@ -91,7 +91,7 @@ class VoiceKitService: NSObject, SFSpeechRecognizerDelegate {
 
         // Reset the timer
         lastResultTimer?.invalidate()
-        lastResultTimer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: false) { [weak self] _ in
+        lastResultTimer = Timer.scheduledTimer(withTimeInterval: TimeInterval((options["silenceTimeoutMs"] as? Double ?? 1000.0) / 1000.0), repeats: false) { [weak self] _ in
           guard let self else { return }
           Logger.log(level: .debug, message: "Final result timer fired")
           if let finalTranscription = lastTranscription {

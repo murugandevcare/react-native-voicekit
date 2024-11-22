@@ -248,7 +248,7 @@ class VoiceKitService(private val context: ReactApplicationContext) {
                 if (options.getString("mode") == "continuous-and-stop") {
                   stopListening()
                 }
-              }, 1000)
+              }, if (options.hasKey("silenceTimeoutMs")) options.getDouble("silenceTimeoutMs").toLong() else 1000L)
             }
           }
         }

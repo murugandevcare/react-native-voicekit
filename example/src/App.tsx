@@ -6,6 +6,7 @@ export default function App() {
     locale: 'en-US',
     enablePartialResults: true,
     mode: VoiceMode.Continuous,
+    silenceTimeoutMs: 1000,
   });
 
   return (
