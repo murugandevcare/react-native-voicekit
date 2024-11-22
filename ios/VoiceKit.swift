@@ -85,14 +85,14 @@ class VoiceKit: NSObject, VoiceKitServiceDelegate {
   @objc(isSpeechRecognitionAvailable:withRejecter:)
   func isSpeechRecognitionAvailable(resolve: @escaping RCTPromiseResolveBlock, reject: @escaping RCTPromiseRejectBlock) {
     withPromise(resolve: resolve, reject: reject) {
-      return self.service.isAvailable()
+      self.service.isAvailable()
     }
   }
 
   @objc(getSupportedLocales:withRejecter:)
   func getSupportedLocales(resolve: @escaping RCTPromiseResolveBlock, reject: @escaping RCTPromiseRejectBlock) {
     withPromise(resolve: resolve, reject: reject) {
-      return self.service.getSupportedLocales()
+      self.service.getSupportedLocales()
     }
   }
 }
