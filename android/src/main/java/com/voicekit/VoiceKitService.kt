@@ -122,10 +122,11 @@ class VoiceKitService(private val context: ReactApplicationContext) {
       }
 
       if (options.hasKey("mode") && (options.getString("mode") == "continuous" || options.getString("mode") == "continuous-and-stop")) {
-        // TODO: On Android 13+, we might be able to use a custom audio source to improve continuous mode
-        putExtra(RecognizerIntent.EXTRA_SPEECH_INPUT_COMPLETE_SILENCE_LENGTH_MILLIS, 600000)
-        putExtra(RecognizerIntent.EXTRA_SPEECH_INPUT_MINIMUM_LENGTH_MILLIS, 600000)
-        putExtra(RecognizerIntent.EXTRA_SPEECH_INPUT_POSSIBLY_COMPLETE_SILENCE_LENGTH_MILLIS, 600000)
+        // 60s / 1 minute matches the maximum duration of the iOS SFSpeechRecognizer
+        // see https://developer.apple.com/documentation/speech/sfspeechrecognizer
+        putExtra(RecognizerIntent.EXTRA_SPEECH_INPUT_COMPLETE_SILENCE_LENGTH_MILLIS, 60000)
+        putExtra(RecognizerIntent.EXTRA_SPEECH_INPUT_MINIMUM_LENGTH_MILLIS, 60000)
+        putExtra(RecognizerIntent.EXTRA_SPEECH_INPUT_POSSIBLY_COMPLETE_SILENCE_LENGTH_MILLIS, 60000)
       }
     }
 
