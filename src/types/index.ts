@@ -3,6 +3,7 @@ export enum VoiceEvent {
   PartialResult = 'partial-result',
   AvailabilityChange = 'availability-change',
   ListeningStateChange = 'listening-state-change',
+  ModelDownloadProgress = 'model-download-progress',
   Error = 'error',
 }
 
@@ -11,6 +12,7 @@ export interface VoiceEventMap extends Record<VoiceEvent, any[]> {
   [VoiceEvent.PartialResult]: [string];
   [VoiceEvent.AvailabilityChange]: [boolean];
   [VoiceEvent.ListeningStateChange]: [boolean];
+  [VoiceEvent.ModelDownloadProgress]: [number];
   [VoiceEvent.Error]: any[];
 }
 
@@ -18,6 +20,11 @@ export enum VoiceMode {
   Single = 'single',
   Continuous = 'continuous',
   ContinuousAndStop = 'continuous-and-stop',
+}
+
+export enum VoiceModelDownloadStatus {
+  Started = 'started',
+  Scheduled = 'scheduled',
 }
 
 export interface VoiceStartListeningOptions {
@@ -57,8 +64,7 @@ export interface VoiceStartListeningOptions {
    * Whether to force usage of the on-device speech recognizer. Does not have any effect on iOS. Only works on Android
    * 13 and above. Defaults to `false`.
    * Note: When using the on-device recognizer, some locales returned by `getSupportedLocales()` may not be installed
-   * on the device yet and need to be installed first.
-   * TODO: Add a method to install locales for the Android on-device recognizer
+   * on the device yet and need to be installed using `downloadOnDeviceModel()` first.
    */
   useOnDeviceRecognizer?: boolean;
 }

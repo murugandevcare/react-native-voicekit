@@ -68,13 +68,32 @@ class VoiceKitModule(reactContext: ReactApplicationContext) :
     try {
       voiceKitService.getSupportedLocales(reactApplicationContext) { locales ->
         val writableArray = Arguments.createArray()
-        locales.forEach { writableArray.pushString(it) }
+        locales["installed"]?.forEach { writableArray.pushString(it) }
+        locales["supported"]?.forEach { writableArray.pushString(it) }
         promise.resolve(writableArray)
       }
     } catch (e: Exception) {
       Log.e(TAG, "Error getting supported locales", e)
       promise.reject(VoiceError.RecognitionFailed.code, "Failed to get supported locales")
     }
+  }
+
+  @ReactMethod
+  fun isOnDeviceModelInstalled(locale: String, promise: Promise) {
+    voiceKitService.getSupportedLocales(reactApplicationContext) { locales ->
+      promise.resolve(locales["installed"]?.contains(locale) ?: false)
+    }
+  }
+
+  @ReactMethod
+  fun downloadOnDeviceModel(locale: String, promise: Promise) {
+    voiceKitService.downloadOnDeviceModel(locale, { result ->
+      val response = Arguments.createMap().apply {
+        putString("status", result["status"] as String)
+        putBoolean("progressAvailable", result["progressAvailable"] as Boolean)
+      }
+      promise.resolve(response)
+    })
   }
 
   companion object {

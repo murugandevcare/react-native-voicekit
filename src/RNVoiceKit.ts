@@ -3,7 +3,7 @@ import { NativeEventEmitter, NativeModules, Platform } from 'react-native';
 import RNVoiceError from './utils/VoiceError';
 import { VoiceErrorCode } from './types/native';
 import { VoiceEvent, VoiceMode } from './types';
-import type { VoiceEventMap, VoiceStartListeningOptions } from './types';
+import { VoiceModelDownloadStatus, type VoiceEventMap, type VoiceStartListeningOptions } from './types';
 
 const LINKING_ERROR =
   `The package 'react-native-voicekit' doesn't seem to be linked. Make sure: \n\n` +
@@ -94,14 +94,55 @@ class RNVoiceKit {
   }
 
   /**
-   * Gets the list of supported locales for speech recognition. On Android, this gets the list of
-   * supported locales for the on-device speech recognizer.
+   * Gets the list of supported locales for speech recognition. On Android, this gets the list of supported locales for
+   * the on-device speech recognizer. Note that this does not check if the model is installed already. Use
+   * `isOnDeviceModelInstalled()` to check if the model for a given locale is installed before using it.
    * Does not work on Android versions below 13 and will return an empty array for those versions.
    *
    * @returns The list of supported locales.
    */
   async getSupportedLocales(): Promise<string[]> {
     return await nativeInstance.getSupportedLocales();
+  }
+
+  /**
+   * Checks if the on-device speech recognizer model for the given locale is installed. If it is not, use
+   * `downloadOnDeviceModel()` to download it. Only works on Android 13+.
+   * Does not have any effect on iOS and will simply check if the locale is supported.
+   *
+   * @param locale - The locale to check.
+   * @returns Whether the model is installed.
+   */
+  async isOnDeviceModelInstalled(locale: string): Promise<boolean> {
+    if (Platform.OS === 'ios') {
+      return (await this.getSupportedLocales()).includes(locale);
+    }
+
+    return await nativeInstance.isOnDeviceModelInstalled(locale);
+  }
+
+  /**
+   * Downloads the on-device speech recognizer model for the given locale. Only works on Android 13+.
+   * When the download was successfully started, the promise will resolve with a `started` status.
+   * On Android 14+,you can listen to the `VoiceEvent.ModelDownloadProgress` event to track the download progress.
+   * Does not have any effect on iOS and will simply return a `started` status if the locale is supported, or throw
+   * an error if it is not.
+   *
+   * @returns The status of the model download and whether download progress is available via the
+   * `VoiceEvent.ModelDownloadProgress` event.
+   */
+  async downloadOnDeviceModel(
+    locale: string
+  ): Promise<{ status: VoiceModelDownloadStatus; progressAvailable: boolean }> {
+    if (Platform.OS === 'ios') {
+      if ((await this.getSupportedLocales()).includes(locale)) {
+        return { status: VoiceModelDownloadStatus.Started, progressAvailable: false };
+      } else {
+        throw new RNVoiceError('Locale is not supported', VoiceErrorCode.INVALID_STATE); // TODO: better code
+      }
+    }
+
+    return await nativeInstance.downloadOnDeviceModel(locale);
   }
 
   addListener<T extends VoiceEvent>(event: T, listener: (...args: VoiceEventMap[T]) => void) {

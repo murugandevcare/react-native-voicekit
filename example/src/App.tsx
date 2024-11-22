@@ -1,10 +1,11 @@
-import { StyleSheet, View, Text, TouchableOpacity, TextInput } from 'react-native';
-import { VoiceError, VoiceKit, VoiceMode, useVoice } from 'react-native-voicekit';
+import { StyleSheet, View, Text, TouchableOpacity, TextInput, Platform } from 'react-native';
+import { VoiceError, VoiceEvent, VoiceKit, VoiceMode, useVoice } from 'react-native-voicekit';
 import Dropdown from './components/Dropdown';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 
 export default function App() {
   const [locale, setLocale] = useState('en-US');
+  const [isLocaleInstalled, setIsLocaleInstalled] = useState(Platform.OS !== 'android');
   const [supportedLocales, setSupportedLocales] = useState<string[]>([]);
 
   const { available, listening, transcript, startListening, stopListening, resetTranscript } = useVoice({
@@ -22,12 +23,26 @@ export default function App() {
     });
   }, [locale]);
 
+  useEffect(() => {
+    VoiceKit.isOnDeviceModelInstalled(locale).then((isInstalled) => {
+      setIsLocaleInstalled(isInstalled);
+    });
+  }, [locale]);
+
+  const onModelDownloadProgress = useCallback((progress: number) => {
+    console.log('Model download progress:', progress);
+    if (progress >= 100) {
+      setIsLocaleInstalled(true);
+      VoiceKit.removeListener(VoiceEvent.ModelDownloadProgress, onModelDownloadProgress);
+    }
+  }, []);
+
   return (
     <View style={styles.container}>
       <Text>Is available: {available ? 'Yes' : 'No'}</Text>
       <Text style={{ marginBottom: 30 }}>Is listening: {listening ? 'Yes' : 'No'}</Text>
       <Dropdown
-        label="Locale"
+        label={`Locale${Platform.OS === 'android' ? ` (is installed: ${isLocaleInstalled ? 'yes' : 'no'})` : ''}`}
         data={supportedLocales.map((l) => ({ label: l, value: l }))}
         maxHeight={300}
         value={locale}
@@ -35,14 +50,34 @@ export default function App() {
         containerStyle={styles.dropdown}
         style={styles.dropdown}
       />
+      {Platform.OS === 'android' && (
+        <TouchableOpacity
+          onPress={() => {
+            VoiceKit.downloadOnDeviceModel(locale)
+              .then((result) => {
+                if (result.progressAvailable) {
+                  VoiceKit.addListener(VoiceEvent.ModelDownloadProgress, onModelDownloadProgress);
+                } else {
+                  console.log('Model download status:', result.status);
+                }
+              })
+              .catch((error) => {
+                console.error('Error downloading model', error, error instanceof VoiceError ? error.details : null);
+              });
+          }}
+          disabled={isLocaleInstalled}
+          style={[styles.button, isLocaleInstalled && styles.disabledButton]}>
+          <Text style={styles.buttonText}>Download "{locale}" Model</Text>
+        </TouchableOpacity>
+      )}
       <TouchableOpacity
         onPress={async () => {
           await startListening().catch((error) => {
             console.error('Error starting listening', error, error instanceof VoiceError ? error.details : null);
           });
         }}
-        disabled={!available || listening}
-        style={[styles.button, (!available || listening) && styles.disabledButton]}>
+        disabled={!available || !isLocaleInstalled || listening}
+        style={[styles.button, (!available || !isLocaleInstalled || listening) && styles.disabledButton]}>
         <Text style={styles.buttonText}>Start Listening</Text>
       </TouchableOpacity>
       <TouchableOpacity

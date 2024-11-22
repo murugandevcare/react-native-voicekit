@@ -1,4 +1,4 @@
-import type { VoiceStartListeningOptions } from '.';
+import type { VoiceModelDownloadStatus, VoiceStartListeningOptions } from '.';
 
 export enum VoiceErrorCode {
   SPEECH_RECOGNIZER_NOT_AVAILABLE = 'ERR_SPEECH_RECOGNIZER_NOT_AVAILABLE',
@@ -15,5 +15,7 @@ export default interface NativeRNVoiceKit {
   startListening: (options: Required<VoiceStartListeningOptions>) => Promise<void>;
   stopListening: () => Promise<void>;
   isSpeechRecognitionAvailable: () => Promise<boolean>;
+  isOnDeviceModelInstalled: (locale: string) => Promise<boolean>;
   getSupportedLocales: () => Promise<string[]>;
+  downloadOnDeviceModel: (locale: string) => Promise<{ status: VoiceModelDownloadStatus; progressAvailable: boolean }>;
 }

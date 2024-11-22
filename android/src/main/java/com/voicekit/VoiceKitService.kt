@@ -10,6 +10,7 @@ import android.speech.RecognizerIntent
 import android.speech.SpeechRecognizer
 import android.speech.RecognitionSupport
 import android.speech.RecognitionSupportCallback
+import android.speech.ModelDownloadListener
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import com.facebook.react.bridge.*
@@ -42,6 +43,8 @@ class VoiceKitService(private val context: ReactApplicationContext) {
 
   private var lastResultTimer: Handler? = null
   private var lastTranscription: String? = null
+
+  private var isDownloadingModel: Boolean = false
 
   fun sendEvent(eventName: String, params: Any?) {
     context
@@ -278,20 +281,18 @@ class VoiceKitService(private val context: ReactApplicationContext) {
     }
   }
 
-  fun getSupportedLocales(context: Context, callback: (List<String>) -> Unit) {
+  fun getSupportedLocales(context: Context, callback: (Map<String, List<String>>) -> Unit) {
     Log.d(TAG, "Getting supported locales")
 
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-      // On Android 13+, we can get the list from the on-device recognizer
-      // TODO: The on-device supported locales are not necessarily the ones we can use for the standard recognizer
-      // We need to improve the usage of the default recognizer & on-device recognizer for both Android 13+ and <13
+      // On Android 13+, we can get a list of locales supported by the on-device recognizer
 
-      // On-device speech Recognizer can only be ran on main thread
+      // On-device speech recognizer can only be ran on main thread
       Handler(context.mainLooper).post {
         val tempSpeechRecognizer = SpeechRecognizer.createOnDeviceSpeechRecognizer(context)
         val intent = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH)
 
-        tempSpeechRecognizer?.checkRecognitionSupport(
+        tempSpeechRecognizer.checkRecognitionSupport(
           intent,
           Executors.newSingleThreadExecutor(),
           @RequiresApi(Build.VERSION_CODES.TIRAMISU)
@@ -299,13 +300,13 @@ class VoiceKitService(private val context: ReactApplicationContext) {
             override fun onSupportResult(recognitionSupport: RecognitionSupport) {
               Log.d(TAG, "getSupportedLocales() onSupportResult called with recognitionSupport $recognitionSupport")
 
-              // TODO: We need a method to download supported but not installed locales, then we can send mergedLocales
-              val installedLocales = recognitionSupport.installedOnDeviceLanguages
-              val supportedLocales = recognitionSupport.supportedOnDeviceLanguages // not necessarily installed for on-device recognition
+              val installedLocales = recognitionSupport.installedOnDeviceLanguages.map { it.toString() }
+              val supportedLocales = recognitionSupport.supportedOnDeviceLanguages.map { it.toString() }
 
-              val mergedLocales = (installedLocales + supportedLocales).distinct().sorted()
-
-              callback(installedLocales?.map { it.toString() } ?: emptyList())
+              callback(mapOf(
+                "installed" to installedLocales,
+                "supported" to supportedLocales
+              ))
 
               tempSpeechRecognizer.destroy()
             }
@@ -318,8 +319,81 @@ class VoiceKitService(private val context: ReactApplicationContext) {
         )
       }
     } else {
-      // TODO: Implement fallback for Android <13
-      callback(emptyList())
+      callback(mapOf(
+        "installed" to emptyList(),
+        "supported" to emptyList()
+      ))
+    }
+  }
+
+  fun downloadOnDeviceModel(locale: String, callback: (Map<String, Any>) -> Unit) {
+    if (isDownloadingModel) {
+      // throw VoiceError.InvalidState("A model download is already in progress")
+      throw VoiceError.InvalidState
+    }
+
+    if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) {
+      // throw VoiceError.InvalidState("Android version must be 13 or higher to download speech models")
+      throw VoiceError.InvalidState
+    }
+
+    val intent = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
+      putExtra(RecognizerIntent.EXTRA_LANGUAGE, locale)
+    }
+
+    // Android 13 does not support progress tracking, simply download the model
+    if (Build.VERSION.SDK_INT < Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+      Handler(context.mainLooper).post {
+        val recognizer = SpeechRecognizer.createOnDeviceSpeechRecognizer(context)
+        recognizer.triggerModelDownload(intent)
+        recognizer.destroy()
+        callback(mapOf(
+          "status" to "started",
+          "progressAvailable" to false
+        ))
+      }
+      return
+    }
+
+    // Android 14+ supports progress tracking, track download progress
+    isDownloadingModel = true
+    Handler(context.mainLooper).post {
+      val recognizer = SpeechRecognizer.createOnDeviceSpeechRecognizer(context)
+      recognizer.triggerModelDownload(
+        intent,
+        Executors.newSingleThreadExecutor(),
+        @RequiresApi(Build.VERSION_CODES.UPSIDE_DOWN_CAKE)
+        object : ModelDownloadListener {
+          override fun onProgress(progress: Int) {
+            sendEvent("RNVoiceKit.model-download-progress", progress)
+          }
+
+          override fun onSuccess() {
+            isDownloadingModel = false
+            recognizer.destroy()
+          }
+
+          override fun onScheduled() {
+            isDownloadingModel = false
+            /*callback(mapOf(
+              "status" to "scheduled",
+              "progressAvailable" to false
+            ))*/
+            recognizer.destroy()
+          }
+
+          override fun onError(error: Int) {
+            isDownloadingModel = false
+            recognizer.destroy()
+            // throw VoiceError.RecognitionFailed("Model download failed with error code: $error")
+            throw VoiceError.RecognitionFailed // TODO: this doesn't reach the callback
+          }
+        }
+      )
+      callback(mapOf(
+        "status" to "started",
+        "progressAvailable" to true
+      ))
     }
   }
 
